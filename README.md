@@ -6,7 +6,7 @@ FMOD is an audio engine and middleware solution for interactive audio in games. 
 
 This module exposes most of the Studio API functions to Godot's GDScript and also provides helpers for performing common functions like attaching Studio events to Godot nodes and playing 3D/positional audio. _It is still very much a work in progress and some API functions are not yet exposed._ Feel free to tweak/extend it based on your project's needs.
 
-**Note:** FMOD provides a C# wrapper for their API which is used in the Unity integration and it is possible to use the same wrapper to build an integration for Godot in C#. However do note that this would only work on a Mono build of Godot as C# support is required and performance might not be on the same level as a C++ integration. 
+**Note:** FMOD provides a C# wrapper for their API which is used in the Unity integration and it is possible to use the same wrapper to build an integration for Godot in C#. However do note that this would only work on a Mono build of Godot and performance might not be on the same level as a C++ integration. 
 
 ## Installing the module
 
@@ -49,6 +49,7 @@ func _ready():
 	FMOD.system_add_listener($Listener)
 
 	# play some events
+	# technically these are not one-shots but this is just for demo's sake
 	FMOD.play_one_shot("event:/Car engine", $SoundSource1)
 	FMOD.play_one_shot("event:/Waterfall", $SoundSource2)
 
@@ -121,6 +122,23 @@ FMOD.attach_instance_to_node(uuid, self)
 
 # detaches the instance from its Node
 FMOD.detach_instance_from_node(uuid)
+```
+
+### Playing sounds using FMOD Core / Low Level API
+
+You can load and play any sound file in your project directory by using the FMOD Low Level API bindings. Similar to Studio Events these instances are identified by a UUID generated in script. Any instances you create must be released manually. Refer to FMOD's documentation pages for a list of compatible sound formats.
+
+```gdscript
+# note that this function returns the UUID back to you as its return value
+var my_sound = FMOD.sound_load(UUID.new(), "./ta-da.wav", Fmod.FMOD_DEFAULT)
+
+FMOD.sound_play(my_sound)
+
+# wait a bit
+yield(sound_timer, "timeout")
+
+FMOD.sound_stop(my_sound)
+FMOD.sound_release(my_sound)
 ```
 
 ## Issues
