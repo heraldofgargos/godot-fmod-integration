@@ -216,8 +216,8 @@ int Fmod::getBankVCACount(const String &pathToBank) {
 	return -1;
 }
 
-void Fmod::createEventInstance(const String &uuid, const String &eventPath) {
-	if (unmanagedEvents.has(uuid)) return; // provided uuid is not valid
+String Fmod::createEventInstance(const String &uuid, const String &eventPath) {
+	if (unmanagedEvents.has(uuid)) return uuid; // provided uuid is not valid
 	if (!eventDescriptions.has(eventPath)) {
 		FMOD::Studio::EventDescription *desc = nullptr;
 		checkErrors(system->getEvent(eventPath.ascii().get_data(), &desc));
@@ -228,6 +228,7 @@ void Fmod::createEventInstance(const String &uuid, const String &eventPath) {
 	checkErrors(desc->value()->createInstance(&instance));
 	if (instance)
 		unmanagedEvents.insert(uuid, instance);
+	return uuid;
 }
 
 float Fmod::getEventParameter(const String &uuid, const String &parameterName) {
@@ -454,7 +455,7 @@ void Fmod::loadVCA(const String &VCAPath) {
 	}
 }
 
-FMOD_VECTOR Fmod::toFmodVector(Vector3 vec) {
+FMOD_VECTOR Fmod::toFmodVector(Vector3 &vec) {
 	FMOD_VECTOR fv;
 	fv.x = vec.x;
 	fv.y = vec.y;
@@ -462,7 +463,7 @@ FMOD_VECTOR Fmod::toFmodVector(Vector3 vec) {
 	return fv;
 }
 
-FMOD_3D_ATTRIBUTES Fmod::get3DAttributes(FMOD_VECTOR pos, FMOD_VECTOR up, FMOD_VECTOR forward, FMOD_VECTOR vel) {
+FMOD_3D_ATTRIBUTES Fmod::get3DAttributes(FMOD_VECTOR &pos, FMOD_VECTOR &up, FMOD_VECTOR &forward, FMOD_VECTOR &vel) {
 	FMOD_3D_ATTRIBUTES f3d;
 	f3d.forward = forward;
 	f3d.position = pos;
@@ -578,6 +579,115 @@ void Fmod::detachInstanceFromNode(const String &uuid) {
 	}
 }
 
+float Fmod::getVCAVolume(const String &VCAPath) {
+	loadVCA(VCAPath);
+	if (!VCAs.has(VCAPath)) return 0.0f;
+	auto vca = VCAs.find(VCAPath);
+	float volume = 0.0f;
+	checkErrors(vca->value()->getVolume(&volume));
+	return volume;
+}
+
+void Fmod::setVCAVolume(const String &VCAPath, float volume) {
+	loadVCA(VCAPath);
+	if (!VCAs.has(VCAPath)) return;
+	auto vca = VCAs.find(VCAPath);
+	checkErrors(vca->value()->setVolume(volume));
+}
+
+void Fmod::playSound(const String &uuid) {
+	if (sounds.has(uuid)) {
+		auto s = sounds.find(uuid)->value();
+		auto c = channels.find(s)->value();
+		checkErrors(c->setPaused(false));
+	}
+}
+
+void Fmod::setSoundPaused(const String &uuid, bool paused) {
+	if (sounds.has(uuid)) {
+		auto s = sounds.find(uuid)->value();
+		auto c = channels.find(s)->value();
+		checkErrors(c->setPaused(paused));
+	}
+}
+
+void Fmod::stopSound(const String &uuid) {
+	if (sounds.has(uuid)) {
+		auto s = sounds.find(uuid)->value();
+		auto c = channels.find(s)->value();
+		checkErrors(c->stop());
+	}
+}
+
+bool Fmod::isSoundPlaying(const String &uuid) {
+	if (sounds.has(uuid)) {
+		auto s = sounds.find(uuid)->value();
+		auto c = channels.find(s)->value();
+		bool isPlaying = false;
+		checkErrors(c->isPlaying(&isPlaying));
+		return isPlaying;
+	}
+	return false;
+}
+
+void Fmod::setSoundVolume(const String &uuid, float volume) {
+	if (sounds.has(uuid)) {
+		auto s = sounds.find(uuid)->value();
+		auto c = channels.find(s)->value();
+		checkErrors(c->setVolume(volume));
+	}
+}
+
+float Fmod::getSoundVolume(const String &uuid) {
+	if (sounds.has(uuid)) {
+		auto s = sounds.find(uuid)->value();
+		auto c = channels.find(s)->value();
+		float volume = 0.f;
+		checkErrors(c->getVolume(&volume));
+		return volume;
+	}
+	return 0.f;
+}
+
+float Fmod::getSoundPitch(const String &uuid) {
+	if (sounds.has(uuid)) {
+		auto s = sounds.find(uuid)->value();
+		auto c = channels.find(s)->value();
+		float pitch = 0.f;
+		checkErrors(c->getPitch(&pitch));
+		return pitch;
+	}
+	return 0.f;
+}
+
+void Fmod::setSoundPitch(const String &uuid, float pitch) {
+	if (sounds.has(uuid)) {
+		auto s = sounds.find(uuid)->value();
+		auto c = channels.find(s)->value();
+		checkErrors(c->setPitch(pitch));
+	}
+}
+
+String Fmod::loadSound(const String &uuid, const String &path, int mode) {
+	if (!sounds.has(path)) {
+		FMOD::Sound *sound = nullptr;
+		checkErrors(lowLevelSystem->createSound(path.ascii().get_data(), mode, nullptr, &sound));
+		if (sound) {
+			sounds.insert(uuid, sound);
+			FMOD::Channel *channel = nullptr;
+			checkErrors(lowLevelSystem->playSound(sound, nullptr, true, &channel));
+			if (channel) channels.insert(sound, channel);
+		}
+	}
+	return uuid;
+}
+
+void Fmod::releaseSound(const String &path) {
+	if (!sounds.has(path)) return; // sound is not loaded
+	auto sound = sounds.find(path);
+	if (sound->value()) checkErrors(sound->value()->release());
+}
+
 void Fmod::_bind_methods() {
 	/* system functions */
 	ClassDB::bind_method(D_METHOD("system_init", "num_of_channels", "studio_flags", "flags"), &Fmod::init);
@@ -637,6 +747,18 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("vca_get_volume", "path_to_vca"), &Fmod::getVCAVolume);
 	ClassDB::bind_method(D_METHOD("vca_set_volume", "path_to_vca", "volume"), &Fmod::setVCAVolume);
 
+	/* Sound functions */
+	ClassDB::bind_method(D_METHOD("sound_load", "uuid", "path_to_sound", "mode"), &Fmod::loadSound);
+	ClassDB::bind_method(D_METHOD("sound_play", "uuid"), &Fmod::playSound);
+	ClassDB::bind_method(D_METHOD("sound_stop", "uuid"), &Fmod::stopSound);
+	ClassDB::bind_method(D_METHOD("sound_release", "uuid"), &Fmod::releaseSound);
+	ClassDB::bind_method(D_METHOD("sound_set_paused", "uuid", "paused"), &Fmod::setSoundPaused);
+	ClassDB::bind_method(D_METHOD("sound_is_playing", "uuid"), &Fmod::isSoundPlaying);
+	ClassDB::bind_method(D_METHOD("sound_set_volume", "uuid", "volume"), &Fmod::setSoundVolume);
+	ClassDB::bind_method(D_METHOD("sound_get_volume", "uuid"), &Fmod::getSoundVolume);
+	ClassDB::bind_method(D_METHOD("sound_set_pitch", "uuid", "pitch"), &Fmod::setSoundPitch);
+	ClassDB::bind_method(D_METHOD("sound_get_pitch", "uuid"), &Fmod::getSoundPitch);
+
 	/* FMOD_INITFLAGS */
 	BIND_CONSTANT(FMOD_INIT_NORMAL);
 	BIND_CONSTANT(FMOD_INIT_STREAM_FROM_UPDATE);
@@ -693,22 +815,38 @@ void Fmod::_bind_methods() {
 	BIND_CONSTANT(FMOD_SPEAKERMODE_7POINT1);
 	BIND_CONSTANT(FMOD_SPEAKERMODE_7POINT1POINT4);
 	BIND_CONSTANT(FMOD_SPEAKERMODE_MAX);
-}
 
-float Fmod::getVCAVolume(const String &VCAPath) {
-	loadVCA(VCAPath);
-	if (!VCAs.has(VCAPath)) return 0.0f;
-	auto vca = VCAs.find(VCAPath);
-	float volume = 0.0f;
-	checkErrors(vca->value()->getVolume(&volume));
-	return volume;
-}
+	/* FMOD_MODE */
+	BIND_CONSTANT(FMOD_DEFAULT);
+	BIND_CONSTANT(FMOD_LOOP_OFF);
+	BIND_CONSTANT(FMOD_LOOP_NORMAL);
+	BIND_CONSTANT(FMOD_LOOP_BIDI);
+	BIND_CONSTANT(FMOD_2D);
+	BIND_CONSTANT(FMOD_3D);
+	BIND_CONSTANT(FMOD_CREATESTREAM);
+	BIND_CONSTANT(FMOD_CREATESAMPLE);
+	BIND_CONSTANT(FMOD_CREATECOMPRESSEDSAMPLE);
+	BIND_CONSTANT(FMOD_OPENUSER);
+	BIND_CONSTANT(FMOD_OPENMEMORY);
+	BIND_CONSTANT(FMOD_OPENMEMORY_POINT);
+	BIND_CONSTANT(FMOD_OPENRAW);
+	BIND_CONSTANT(FMOD_OPENONLY);
+	BIND_CONSTANT(FMOD_ACCURATETIME);
+	BIND_CONSTANT(FMOD_MPEGSEARCH);
+	BIND_CONSTANT(FMOD_NONBLOCKING);
+	BIND_CONSTANT(FMOD_UNIQUE);
+	BIND_CONSTANT(FMOD_3D_HEADRELATIVE);
+	BIND_CONSTANT(FMOD_3D_WORLDRELATIVE);
+	BIND_CONSTANT(FMOD_3D_INVERSEROLLOFF);
+	BIND_CONSTANT(FMOD_3D_LINEARROLLOFF);
+	BIND_CONSTANT(FMOD_3D_LINEARSQUAREROLLOFF);
+	BIND_CONSTANT(FMOD_3D_INVERSETAPEREDROLLOFF);
+	BIND_CONSTANT(FMOD_3D_CUSTOMROLLOFF);
+	BIND_CONSTANT(FMOD_3D_IGNOREGEOMETRY);
+	BIND_CONSTANT(FMOD_IGNORETAGS);
+	BIND_CONSTANT(FMOD_LOWMEM);
+	BIND_CONSTANT(FMOD_VIRTUAL_PLAYFROMSTART);
 
-void Fmod::setVCAVolume(const String &VCAPath, float volume) {
-	loadVCA(VCAPath);
-	if (!VCAs.has(VCAPath)) return;
-	auto vca = VCAs.find(VCAPath);
-	checkErrors(vca->value()->setVolume(volume));
 }
 
 Fmod::Fmod() {

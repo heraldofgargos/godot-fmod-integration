@@ -58,6 +58,8 @@ class Fmod : public Object {
 	Map<String, FMOD::Studio::EventDescription *> eventDescriptions;
 	Map<String, FMOD::Studio::Bus *> buses;
 	Map<String, FMOD::Studio::VCA *> VCAs;
+	Map<String, FMOD::Sound *> sounds;
+	Map<FMOD::Sound *, FMOD::Channel *> channels;
 
 	// keep track of one shot instances internally
 	Vector<FMOD::Studio::EventInstance *> oneShotInstances;
@@ -71,8 +73,8 @@ class Fmod : public Object {
 	// referenced through uuids generated in script
 	Map<String, FMOD::Studio::EventInstance *> unmanagedEvents;
 
-	FMOD_3D_ATTRIBUTES get3DAttributes(FMOD_VECTOR pos, FMOD_VECTOR up, FMOD_VECTOR forward, FMOD_VECTOR vel);
-	FMOD_VECTOR toFmodVector(Vector3 vec);
+	FMOD_3D_ATTRIBUTES get3DAttributes(FMOD_VECTOR &pos, FMOD_VECTOR &up, FMOD_VECTOR &forward, FMOD_VECTOR &vel);
+	FMOD_VECTOR toFmodVector(Vector3 &vec);
 	void setListenerAttributes();
 	void updateInstance3DAttributes(FMOD::Studio::EventInstance *i, Object *o);
 	int checkErrors(FMOD_RESULT result);
@@ -109,7 +111,7 @@ public:
 	int getBankVCACount(const String &pathToBank);
 
 	/* event functions */
-	void createEventInstance(const String &uuid, const String &eventPath);
+	String createEventInstance(const String &uuid, const String &eventPath);
 	float getEventParameter(const String &uuid, const String &parameterName);
 	void setEventParameter(const String &uuid, const String &parameterName, float value);
 	void releaseEvent(const String &uuid);
@@ -141,6 +143,18 @@ public:
 	/* VCA functions */
 	float getVCAVolume(const String &VCAPath);
 	void setVCAVolume(const String &VCAPath, float volume);
+
+	/* Sound functions */
+	void playSound(const String &uuid);
+	String loadSound(const String &uuid, const String &path, int mode);
+	void releaseSound(const String &path);
+	void setSoundPaused(const String &uuid, bool paused);
+	void stopSound(const String &uuid);
+	bool isSoundPlaying(const String &uuid);
+	void setSoundVolume(const String &uuid, float volume);
+	float getSoundVolume(const String &uuid);
+	float getSoundPitch(const String &uuid);
+	void setSoundPitch(const String &uuid, float pitch);
 
 	Fmod();
 	~Fmod();
