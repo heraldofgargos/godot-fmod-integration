@@ -159,3 +159,35 @@ func vca_get_volume(path_to_vca):
 	
 func vca_set_volume(path_to_vca, volume):
 	return FMOD.vca_set_volume(path_to_vca, volume)
+	
+##### Sound functions #####
+func sound_load(uuid, path_to_sound, mode):
+	return FMOD.sound_load(uuid, path_to_sound, mode)
+	
+func sound_play(uuid):
+	return FMOD.sound_play(uuid)
+	
+func sound_stop(uuid):
+	return FMOD.sound_stop(uuid)
+	
+func sound_release(uuid):
+	return FMOD.sound_release(uuid)
+	
+func sound_set_paused(uuid, paused):
+	return FMOD.sound_set_paused(uuid, paused)
+	
+func sound_is_playing(uuid):
+	return FMOD.sound_is_playing(uuid)
+	
+func sound_set_volume(uuid, volume):
+	return FMOD.sound_set_volume(uuid, volume)
+	
+func sound_get_volume(uuid):
+	return FMOD.sound_get_volume(uuid)
+	
+func sound_get_pitch(uuid):
+	return FMOD.sound_get_pitch(uuid)
+	
+func sound_set_pitch(uuid, pitch):
+	return FMOD.sound_set_pitch(uuid, pitch)
+	
