@@ -7,3 +7,4 @@ __pycache__
 *.obj
 
 demo/.import/
+demo/test_sounds/
