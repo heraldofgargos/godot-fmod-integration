@@ -2,5 +2,5 @@ Import('env')
 
 module_env = env.Clone()
 module_env.add_source_files(env.modules_sources,"*.cpp") 
-module_env.Append(CPPPATH=["#modules/fmod/api/lowlevel/inc", "#modules/fmod/api/studio/inc"])
+module_env.Append(CPPPATH=["#modules/fmod/api/core/inc", "#modules/fmod/api/studio/inc"])
 

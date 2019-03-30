@@ -40,15 +40,15 @@
 #include "scene/3d/spatial.h"
 #include "scene/main/node.h"
 
-#include "fmod.hpp"
-#include "fmod_errors.h"
-#include "fmod_studio.hpp"
+#include "api/core/inc/fmod.hpp"
+#include "api/core/inc/fmod_errors.h"
+#include "api/studio/inc/fmod_studio.hpp"
 
 class Fmod : public Object {
 	GDCLASS(Fmod, Object);
 
 	FMOD::Studio::System *system;
-	FMOD::System *lowLevelSystem;
+	FMOD::System *coreSystem;
 
 	Object *listener;
 
@@ -92,6 +92,8 @@ public:
 	void shutdown();
 	void addListener(Object *gameObj);
 	void setSoftwareFormat(int sampleRate, int speakerMode, int numRawSpeakers);
+	void setGlobalParameter(const String &parameterName, float value);
+	float getGlobalParameter(const String &parameterName);
 
 	/* helper functions for playing sounds in 3D */
 	void playOneShot(const String &eventName, Object *gameObj);

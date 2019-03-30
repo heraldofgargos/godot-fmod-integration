@@ -145,7 +145,17 @@ void Fmod::addListener(Object *gameObj) {
 
 void Fmod::setSoftwareFormat(int sampleRate, int speakerMode, int numRawSpeakers) {
 	auto m = static_cast<FMOD_SPEAKERMODE>(speakerMode);
-	checkErrors(lowLevelSystem->setSoftwareFormat(sampleRate, m, numRawSpeakers));
+	checkErrors(coreSystem->setSoftwareFormat(sampleRate, m, numRawSpeakers));
+}
+
+void Fmod::setGlobalParameter(const String &parameterName, float value) {
+	checkErrors(system->setParameterByName(parameterName.ascii().get_data(), value));
+}
+
+float Fmod::getGlobalParameter(const String &parameterName) {
+	float value = 0.f;
+	checkErrors(system->getParameterByName(parameterName.ascii().get_data(), &value));
+	return value;
 }
 
 String Fmod::loadbank(const String &pathToBank, int flags) {
@@ -236,14 +246,14 @@ float Fmod::getEventParameter(const String &uuid, const String &parameterName) {
 	if (!unmanagedEvents.has(uuid)) return p;
 	auto i = unmanagedEvents.find(uuid);
 	if (i->value())
-		checkErrors(i->value()->getParameterValue(parameterName.ascii().get_data(), &p));
+		checkErrors(i->value()->getParameterByName(parameterName.ascii().get_data(), &p));
 	return p;
 }
 
 void Fmod::setEventParameter(const String &uuid, const String &parameterName, float value) {
 	if (!unmanagedEvents.has(uuid)) return;
 	auto i = unmanagedEvents.find(uuid);
-	if (i->value()) checkErrors(i->value()->setParameterValue(parameterName.ascii().get_data(), value));
+	if (i->value()) checkErrors(i->value()->setParameterByName(parameterName.ascii().get_data(), value));
 }
 
 void Fmod::releaseEvent(const String &uuid) {
@@ -510,7 +520,7 @@ void Fmod::playOneShotWithParams(const String &eventName, Object *gameObj, const
 		for (int i = 0; i < keys.size(); i++) {
 			String k = keys[i];
 			float v = parameters[keys[i]];
-			checkErrors(instance->setParameterValue(k.ascii().get_data(), v));
+			checkErrors(instance->setParameterByName(k.ascii().get_data(), v));
 		}
 		checkErrors(instance->start());
 		oneShotInstances.push_back(instance);
@@ -550,7 +560,7 @@ void Fmod::playOneShotAttachedWithParams(const String &eventName, Object *gameOb
 		for (int i = 0; i < keys.size(); i++) {
 			String k = keys[i];
 			float v = parameters[keys[i]];
-			checkErrors(instance->setParameterValue(k.ascii().get_data(), v));
+			checkErrors(instance->setParameterByName(k.ascii().get_data(), v));
 		}
 		checkErrors(instance->start());
 	}
@@ -671,11 +681,11 @@ void Fmod::setSoundPitch(const String &uuid, float pitch) {
 String Fmod::loadSound(const String &uuid, const String &path, int mode) {
 	if (!sounds.has(path)) {
 		FMOD::Sound *sound = nullptr;
-		checkErrors(lowLevelSystem->createSound(path.ascii().get_data(), mode, nullptr, &sound));
+		checkErrors(coreSystem->createSound(path.ascii().get_data(), mode, nullptr, &sound));
 		if (sound) {
 			sounds.insert(uuid, sound);
 			FMOD::Channel *channel = nullptr;
-			checkErrors(lowLevelSystem->playSound(sound, nullptr, true, &channel));
+			checkErrors(coreSystem->playSound(sound, nullptr, true, &channel));
 			if (channel) channels.insert(sound, channel);
 		}
 	}
@@ -695,6 +705,9 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("system_shutdown"), &Fmod::shutdown);
 	ClassDB::bind_method(D_METHOD("system_add_listener", "node"), &Fmod::addListener);
 	ClassDB::bind_method(D_METHOD("system_set_software_format", "sample_rate", "speaker_mode", "num_raw_speakers"), &Fmod::setSoftwareFormat);
+	ClassDB::bind_method(D_METHOD("system_set_parameter", "name", "value"), &Fmod::setGlobalParameter);
+	ClassDB::bind_method(D_METHOD("system_get_parameter", "name"), &Fmod::getGlobalParameter);
+	
 
 	/* integration helper functions */
 	ClassDB::bind_method(D_METHOD("play_one_shot", "event_name", "node"), &Fmod::playOneShot);
@@ -772,7 +785,6 @@ void Fmod::_bind_methods() {
 	BIND_CONSTANT(FMOD_INIT_PREFER_DOLBY_DOWNMIX);
 	BIND_CONSTANT(FMOD_INIT_THREAD_UNSAFE);
 	BIND_CONSTANT(FMOD_INIT_PROFILE_METER_ALL);
-	BIND_CONSTANT(FMOD_INIT_DISABLE_SRS_HIGHPASSFILTER);
 
 	/* FMOD_STUDIO_INITFLAGS */
 	BIND_CONSTANT(FMOD_STUDIO_INIT_NORMAL);
@@ -850,9 +862,9 @@ void Fmod::_bind_methods() {
 }
 
 Fmod::Fmod() {
-	system, lowLevelSystem, listener = nullptr;
+	system, coreSystem, listener = nullptr;
 	checkErrors(FMOD::Studio::System::create(&system));
-	checkErrors(system->getLowLevelSystem(&lowLevelSystem));
+	checkErrors(system->getCoreSystem(&coreSystem));
 }
 
 Fmod::~Fmod() {

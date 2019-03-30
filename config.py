@@ -3,9 +3,11 @@ def can_build(env, platform):
 
 
 def configure(env):
-    env.Append(LIBPATH=["#modules/fmod/api/lowlevel/lib/",
-                        "#modules/fmod/api/studio/lib/"])
     if env["bits"] == "32":
+        env.Append(LIBPATH=["#modules/fmod/api/core/lib/x86/",
+                            "#modules/fmod/api/studio/lib/x86/"])
         env.Append(LIBS=["fmod_vc", "fmodstudio_vc"])
     else:
+        env.Append(LIBPATH=["#modules/fmod/api/core/lib/x64/",
+                            "#modules/fmod/api/studio/lib/x64/"])
         env.Append(LIBS=["fmod64_vc", "fmodstudio64_vc"])

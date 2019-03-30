@@ -26,6 +26,12 @@ func system_add_listener(listener):
 	
 func system_set_software_format(sample_rate, speaker_mode, num_raw_speakers):
 	return FMOD.system_set_software_format(sample_rate, speaker_mode, num_raw_speakers)
+	
+func system_set_parameter(name, value):
+	return FMOD.system_set_parameter(name, value)
+	
+func system_get_parameter(name):
+	return FMOD.system_get_parameter(name)
 
 
 ##### helper functions #####

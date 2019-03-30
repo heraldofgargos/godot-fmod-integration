@@ -1,6 +1,6 @@
 # FMOD API
 api/fsbank
-api/lowlevel
+api/core
 api/studio
 
 __pycache__
