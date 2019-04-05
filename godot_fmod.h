@@ -73,8 +73,8 @@ class Fmod : public Object {
 	// referenced through uuids generated in script
 	Map<String, FMOD::Studio::EventInstance *> unmanagedEvents;
 
-	FMOD_3D_ATTRIBUTES get3DAttributes(FMOD_VECTOR &pos, FMOD_VECTOR &up, FMOD_VECTOR &forward, FMOD_VECTOR &vel);
-	FMOD_VECTOR toFmodVector(Vector3 &vec);
+	FMOD_3D_ATTRIBUTES get3DAttributes(FMOD_VECTOR pos, FMOD_VECTOR up, FMOD_VECTOR forward, FMOD_VECTOR vel);
+	FMOD_VECTOR toFmodVector(Vector3 vec);
 	void setListenerAttributes();
 	void updateInstance3DAttributes(FMOD::Studio::EventInstance *i, Object *o);
 	int checkErrors(FMOD_RESULT result);

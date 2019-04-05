@@ -465,7 +465,7 @@ void Fmod::loadVCA(const String &VCAPath) {
 	}
 }
 
-FMOD_VECTOR Fmod::toFmodVector(Vector3 &vec) {
+FMOD_VECTOR Fmod::toFmodVector(Vector3 vec) {
 	FMOD_VECTOR fv;
 	fv.x = vec.x;
 	fv.y = vec.y;
@@ -473,7 +473,7 @@ FMOD_VECTOR Fmod::toFmodVector(Vector3 &vec) {
 	return fv;
 }
 
-FMOD_3D_ATTRIBUTES Fmod::get3DAttributes(FMOD_VECTOR &pos, FMOD_VECTOR &up, FMOD_VECTOR &forward, FMOD_VECTOR &vel) {
+FMOD_3D_ATTRIBUTES Fmod::get3DAttributes(FMOD_VECTOR pos, FMOD_VECTOR up, FMOD_VECTOR forward, FMOD_VECTOR vel) {
 	FMOD_3D_ATTRIBUTES f3d;
 	f3d.forward = forward;
 	f3d.position = pos;
