@@ -862,7 +862,7 @@ void Fmod::_bind_methods() {
 }
 
 Fmod::Fmod() {
-	system, coreSystem, listener = nullptr;
+	system, coreSystem, listener = nullptr, nullptr, nullptr;
 	checkErrors(FMOD::Studio::System::create(&system));
 	checkErrors(system->getCoreSystem(&coreSystem));
 }
