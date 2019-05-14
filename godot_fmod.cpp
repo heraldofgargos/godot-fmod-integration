@@ -878,6 +878,7 @@ Fmod::Fmod() {
 	system = nullptr, coreSystem = nullptr, listener = nullptr;
 	checkErrors(FMOD::Studio::System::create(&system));
 	checkErrors(system->getCoreSystem(&coreSystem));
+	distanceScale = 1.0;
 }
 
 Fmod::~Fmod() {
