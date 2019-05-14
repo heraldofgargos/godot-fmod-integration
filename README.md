@@ -21,6 +21,10 @@ FMOD should now be integrated. If you are tweaking/extending the module it is fa
 
 ### Android subtility
 
+Before building the engine, you should first create the environment variable to get the NDK path.
+
+`export ANDROID_NDK_ROOT=pathToYourNDK`
+
 In order to get fmod working on android, you need to make Fmod java static initialization in godot's android export
 template. To do so, follow the next steps :
 
