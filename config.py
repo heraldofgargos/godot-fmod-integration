@@ -1,5 +1,5 @@
 def can_build(env, platform):
-    return platform == "x11" or platform == "windows" or platform == "osx"
+    return platform == "x11" or platform == "windows" or platform == "osx" or platform == "android"
 
 
 def configure(env):
@@ -28,3 +28,10 @@ def configure(env):
         env.Append(LIBS=["fmod", "fmodstudio"])
         env.Append(
             LIBPATH=["#modules/fmod/api/core/lib/", "#modules/fmod/api/studio/lib/"])
+
+    elif env["platform"] == "android":
+        if env["android_arch"] == "arm64v8":
+            env.Append(LIBPATH=["#modules/fmod/api/core/lib/arm64-v8a", "#modules/fmod/api/studio/lib/arm64-v8a"])
+        else:
+            env.Append(LIBPATH=["#modules/fmod/api/core/lib/armeabi-v7a", "#modules/fmod/api/studio/lib/armeabi-v7a"])
+        env.Append(LIBS=["fmod", "fmodstudio"])

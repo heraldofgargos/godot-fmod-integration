@@ -19,6 +19,54 @@ This module exposes most of the Studio API functions to Godot's GDScript and als
 
 FMOD should now be integrated. If you are tweaking/extending the module it is faster to compile it as a dynamic library instead of a static library. Refer to the Godot documentation for more details on this.
 
+### Android subtility
+
+Before building the engine, you should first create the environment variable to get the NDK path.
+
+`export ANDROID_NDK_ROOT=pathToYourNDK`
+
+In order to get fmod working on android, you need to make Fmod java static initialization in godot's android export
+template. To do so, follow the next steps :
+
+- Add fmod.jar as dependency in your project.
+In order to add fmod to gradle you should have dependencies looking like this :  
+```
+dependencies {
+	implementation "com.android.support:support-core-utils:28.0.0"
+	compile files("libs/fmod.jar")
+}
+```
+- Modify `onCreate` and `onDestroy` methods in `Godot` java class  
+
+For `onCreate` you should initialize java part of fmod. You should have something like this :  
+```java
+	@Override
+	protected void onCreate(Bundle icicle) {
+
+		super.onCreate(icicle);
+		FMOD.init(this);
+		Window window = getWindow();
+		...
+	}
+```
+
+For `onDestroy` method, you should close java part of Fmod. It should looks like this :
+```java
+	@Override
+	protected void onDestroy() {
+
+		if (mPaymentsManager != null) mPaymentsManager.destroy();
+		for (int i = 0; i < singleton_count; i++) {
+			singletons[i].onMainDestroy();
+		}
+		FMOD.close();
+		super.onDestroy();
+	}
+```
+
+- Then run `./gradlew build` to generate an apk export template. You can then use it in your project to get FMOD working
+on android.
+
 ## Using the module
 
 ### Basic usage
