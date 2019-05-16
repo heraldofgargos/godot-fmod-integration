@@ -783,7 +783,7 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("sound_set_pitch", "uuid", "pitch"), &Fmod::setSoundPitch);
 	ClassDB::bind_method(D_METHOD("sound_get_pitch", "uuid"), &Fmod::getSoundPitch);
 
-	ClassDB::bind_method(D_METHOD("set_sound_3d_settings", "dopplerScale", "distanceFactor", "rollOffScale"), &Fmod::setSound3DSettings);
+	ClassDB::bind_method(D_METHOD("system_set_sound_3d_settings", "dopplerScale", "distanceFactor", "rollOffScale"), &Fmod::setSound3DSettings);
 
 	/* FMOD_INITFLAGS */
 	BIND_CONSTANT(FMOD_INIT_NORMAL);
