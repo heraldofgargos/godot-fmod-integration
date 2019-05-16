@@ -198,5 +198,5 @@ func sound_set_pitch(uuid, pitch):
 	return FMOD.sound_set_pitch(uuid, pitch)
 
 func system_set_sound_3d_settings(dopplerScale, distanceFactor, rollOffScale):
-    return FMOD.set_sound_3d_settings(dopplerScale, distanceFactor, rollOffScale)
+    return FMOD.system_set_sound_3d_settings(dopplerScale, distanceFactor, rollOffScale)
 	
