@@ -1,4 +1,4 @@
-# FMOD Studio integration for Godot (WIP)
+# FMOD Studio integration for Godot
 
 A Godot C++ module that provides an integration and GDScript bindings for the FMOD Studio API.
 
@@ -6,7 +6,7 @@ FMOD is an audio engine and middleware solution for interactive audio in games. 
 
 This module exposes most of the Studio API functions to Godot's GDScript and also provides helpers for performing common functions like attaching Studio events to Godot nodes and playing 3D/positional audio. _It is still very much a work in progress and some API functions are not yet exposed._ Feel free to tweak/extend it based on your project's needs.
 
-**Note:** FMOD provides a C# wrapper for their API which is used in the Unity integration and it is possible to use the same wrapper to build an integration for Godot in C#. However do note that this would only work on a Mono build of Godot and performance might not be on the same level as a C++ integration. 
+**Note:** FMOD provides a C# wrapper for their API which is used in the Unity integration and it is possible to use the same wrapper to build an integration for Godot in C#. However do note that this would only work on a Mono build of Godot and performance might not be on the same level as a Native/C++ integration. 
 
 ## Installing the module
 
@@ -15,57 +15,8 @@ This module exposes most of the Studio API functions to Godot's GDScript and als
 3. `cd` into the source directory and add the FMOD integration as a submodule into the `modules` directory `git submodule add https://github.com/alexfonseka/godot-fmod-integration modules/fmod`.
 4. Copy the contents of the `api` directory of the FMOD API into the module's `api` directory `modules/fmod/api`. On Windows this is (usually) found at `C:/Program Files (x86)/FMOD SoundSystem/FMOD Studio API Windows/api`.
 5. Recompile the engine. For more information on compiling the engine, refer to the [Godot documentation](https://docs.godotengine.org/en/latest/development/compiling/index.html).
-6. Place the FMOD library files within the `bin` directory for Godot to start. Eg. on Windows these would be `fmod64.dll` and `fmodstudio64.dll` for a 64-bit build of Godot.
+6. Place the FMOD library files within the `bin` directory for Godot to start. Eg. on Windows these would be `fmod.dll` and `fmodstudio.dll`. When shipping, these files have to be included with the release.
 
-FMOD should now be integrated. If you are tweaking/extending the module it is faster to compile it as a dynamic library instead of a static library. Refer to the Godot documentation for more details on this.
-
-### Android subtility
-
-Before building the engine, you should first create the environment variable to get the NDK path.
-
-`export ANDROID_NDK_ROOT=pathToYourNDK`
-
-In order to get fmod working on android, you need to make Fmod java static initialization in godot's android export
-template. To do so, follow the next steps :
-
-- Add fmod.jar as dependency in your project.
-In order to add fmod to gradle you should have dependencies looking like this :  
-```
-dependencies {
-	implementation "com.android.support:support-core-utils:28.0.0"
-	compile files("libs/fmod.jar")
-}
-```
-- Modify `onCreate` and `onDestroy` methods in `Godot` java class  
-
-For `onCreate` you should initialize java part of fmod. You should have something like this :  
-```java
-	@Override
-	protected void onCreate(Bundle icicle) {
-
-		super.onCreate(icicle);
-		FMOD.init(this);
-		Window window = getWindow();
-		...
-	}
-```
-
-For `onDestroy` method, you should close java part of Fmod. It should looks like this :
-```java
-	@Override
-	protected void onDestroy() {
-
-		if (mPaymentsManager != null) mPaymentsManager.destroy();
-		for (int i = 0; i < singleton_count; i++) {
-			singletons[i].onMainDestroy();
-		}
-		FMOD.close();
-		super.onDestroy();
-	}
-```
-
-- Then run `./gradlew build` to generate an apk export template. You can then use it in your project to get FMOD working
-on android.
 
 ## Using the module
 
@@ -189,6 +140,54 @@ FMOD.sound_stop(my_sound)
 FMOD.sound_release(my_sound)
 ```
 
+## For Android build targets
+
+Before building the engine, you should first create the environment variable to get the NDK path.
+
+`export ANDROID_NDK_ROOT=pathToYourNDK`
+
+In order to get FMOD working on Android, you need to make Fmod java static initialization in Godot's Android export
+template. To do so, follow the next steps.
+
+- Add fmod.jar as dependency in your project.
+In order to add FMOD to Gradle you should have dependencies looking like this :  
+```
+dependencies {
+	implementation "com.android.support:support-core-utils:28.0.0"
+	compile files("libs/fmod.jar")
+}
+```
+- Modify `onCreate` and `onDestroy` methods in `Godot` Java class  
+
+For `onCreate` you should initialize Java part of FMOD.  
+```java
+	@Override
+	protected void onCreate(Bundle icicle) {
+
+		super.onCreate(icicle);
+		FMOD.init(this);
+		Window window = getWindow();
+		...
+	}
+```
+
+For `onDestroy` method, you should close Java part of FMOD.
+```java
+	@Override
+	protected void onDestroy() {
+
+		if (mPaymentsManager != null) mPaymentsManager.destroy();
+		for (int i = 0; i < singleton_count; i++) {
+			singletons[i].onMainDestroy();
+		}
+		FMOD.close();
+		super.onDestroy();
+	}
+```
+
+- Then run `./gradlew build` to generate an apk export template. You can then use it in your project to get FMOD working
+on Android.
+
 ## Issues
 
-This project is still a work in progress and is probably not yet ready for use in full-blown production. If you run into issues (crashes, memory leaks, broken 3D sound etc.) open a issue or submit a PR with your fix.
+This project is still a work in progress and is probably not yet ready for use in full-blown production. If you run into issues (crashes, memory leaks, broken 3D sound etc.) open an issue or submit a PR with your contribution.
