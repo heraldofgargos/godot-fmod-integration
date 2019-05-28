@@ -1,6 +1,15 @@
 Import('env')
+import subprocess
+
+def sys_exec(args):
+    proc = subprocess.Popen(args, stdout=subprocess.PIPE)
+    (out, err) = proc.communicate()
+    return out.rstrip("\r\n").lstrip()
 
 module_env = env.Clone()
 module_env.add_source_files(env.modules_sources,"*.cpp") 
 module_env.Append(CPPPATH=["#modules/fmod/api/core/inc", "#modules/fmod/api/studio/inc"])
 
+if env["platform"] == "iphone":
+    sys_exec(["cp", "api/core/lib/libfmod_iphoneos.a", "../../platform/iphone/libfmod_iphoneos.a"])
+    sys_exec(["cp", "api/studio/lib/libfmodstudio_iphoneos.a", "../../platform/iphone/libfmodstudio_iphoneos.a"])
