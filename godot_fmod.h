@@ -50,6 +50,8 @@ class Fmod : public Object {
 	FMOD::Studio::System *system;
 	FMOD::System *coreSystem;
 
+	float distanceScale;
+
 	Object *listener;
 
 	bool nullListenerWarning = true;
@@ -157,6 +159,8 @@ public:
 	float getSoundVolume(const String &uuid);
 	float getSoundPitch(const String &uuid);
 	void setSoundPitch(const String &uuid, float pitch);
+
+	void setSound3DSettings(float dopplerScale, float distanceFactor, float rollOffScale);
 
 	Fmod();
 	~Fmod();

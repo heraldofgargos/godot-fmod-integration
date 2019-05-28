@@ -87,7 +87,8 @@ void Fmod::updateInstance3DAttributes(FMOD::Studio::EventInstance *instance, Obj
 		CanvasItem *ci = Object::cast_to<CanvasItem>(o);
 		if (ci != nullptr) {
 			Transform2D t2d = ci->get_transform();
-			Vector3 pos(t2d.get_origin().x, t2d.get_origin().y, 0.0f),
+			Vector2 posVector = t2d.get_origin() / distanceScale;
+			Vector3 pos(posVector.x, posVector.y, 0.0f),
 					up(0, 1, 0), forward(0, 0, 1), vel(0, 0, 0);
 			FMOD_3D_ATTRIBUTES attr = get3DAttributes(toFmodVector(pos), toFmodVector(up), toFmodVector(forward), toFmodVector(vel));
 			checkErrors(instance->set3DAttributes(&attr));
@@ -95,7 +96,7 @@ void Fmod::updateInstance3DAttributes(FMOD::Studio::EventInstance *instance, Obj
 			// needs testing
 			Spatial *s = Object::cast_to<Spatial>(o);
 			Transform t = s->get_transform();
-			Vector3 pos = t.get_origin();
+			Vector3 pos = t.get_origin() / distanceScale;
 			Vector3 up = t.get_basis().elements[1];
 			Vector3 forward = t.get_basis().elements[2];
 			Vector3 vel(0, 0, 0);
@@ -121,7 +122,8 @@ void Fmod::setListenerAttributes() {
 	CanvasItem *ci = Object::cast_to<CanvasItem>(listener);
 	if (ci != nullptr) {
 		Transform2D t2d = ci->get_transform();
-		Vector3 pos(t2d.get_origin().x, t2d.get_origin().y, 0.0f),
+		Vector2 posVector = t2d.get_origin() / distanceScale;
+		Vector3 pos(posVector.x, posVector.y, 0.0f),
 				up(0, 1, 0), forward(0, 0, 1), vel(0, 0, 0); // TODO: add doppler
 		FMOD_3D_ATTRIBUTES attr = get3DAttributes(toFmodVector(pos), toFmodVector(up), toFmodVector(forward), toFmodVector(vel));
 		checkErrors(system->setListenerAttributes(0, &attr));
@@ -130,7 +132,7 @@ void Fmod::setListenerAttributes() {
 		// needs testing
 		Spatial *s = Object::cast_to<Spatial>(listener);
 		Transform t = s->get_transform();
-		Vector3 pos = t.get_origin();
+		Vector3 pos = t.get_origin() / distanceScale;
 		Vector3 up = t.get_basis().elements[1];
 		Vector3 forward = t.get_basis().elements[2];
 		Vector3 vel(0, 0, 0);
@@ -698,6 +700,15 @@ void Fmod::releaseSound(const String &path) {
 	if (sound->value()) checkErrors(sound->value()->release());
 }
 
+void Fmod::setSound3DSettings(float dopplerScale, float distanceFactor, float rollOffScale) {
+	if (distanceFactor > 0 && checkErrors(coreSystem->set3DSettings(dopplerScale, distanceFactor, rollOffScale))) {
+		distanceScale = distanceFactor;
+		print_line("Successfully set global 3D settings");
+	} else {
+		print_error("FMOD Sound System: Failed to set 3D settings :|");
+	}
+}
+
 void Fmod::_bind_methods() {
 	/* system functions */
 	ClassDB::bind_method(D_METHOD("system_init", "num_of_channels", "studio_flags", "flags"), &Fmod::init);
@@ -771,6 +782,8 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("sound_get_volume", "uuid"), &Fmod::getSoundVolume);
 	ClassDB::bind_method(D_METHOD("sound_set_pitch", "uuid", "pitch"), &Fmod::setSoundPitch);
 	ClassDB::bind_method(D_METHOD("sound_get_pitch", "uuid"), &Fmod::getSoundPitch);
+
+	ClassDB::bind_method(D_METHOD("system_set_sound_3d_settings", "dopplerScale", "distanceFactor", "rollOffScale"), &Fmod::setSound3DSettings);
 
 	/* FMOD_INITFLAGS */
 	BIND_CONSTANT(FMOD_INIT_NORMAL);
@@ -865,6 +878,7 @@ Fmod::Fmod() {
 	system = nullptr, coreSystem = nullptr, listener = nullptr;
 	checkErrors(FMOD::Studio::System::create(&system));
 	checkErrors(system->getCoreSystem(&coreSystem));
+	distanceScale = 1.0;
 }
 
 Fmod::~Fmod() {
