@@ -11,20 +11,25 @@ matrix:
         apt:
           packages:
             [scons, pkg-config, build-essential, p7zip-full]
-      env: PLATFORM=x11 ADDITIONAL_FLAGS="tools=no target=release bits=64"
+      env: PLATFORM=x11 ADDITIONAL_FLAGS="tools=no use_llvm=yes bits=64"
 
     - name: macOS
       os: osx
       compiler: clang
       env: ADDITIONAL_FLAGS="" PLATFORM="osx"
+      addons:
+        homebrew:
+          packages:
+            - jq
+            - p7zip
 
-    - name: Windows MSVC
+    - name: Windows
       os: windows
       env: ADDITIONAL_FLAGS="" PLATFORM="windows"
 
     - name: Android ARM
       os: linux
-      env: ADDITIONAL_FLAGS="android_arch=arm" PLATFORM="android" ANDROID_NDK_ROOT="/home/travis/build/GodotNativeTools/godot-cpp/android-sdk/ndk-bundle"
+      env: ADDITIONAL_FLAGS="android_arch=armv7" PLATFORM="android"
       addons:
         apt:
           sources:
@@ -34,7 +39,7 @@ matrix:
 
     - name: Android ARM64
       os: linux
-      env: ADDITIONAL_FLAGS="android_arch=arm64v8" PLATFORM="android" ANDROID_NDK_ROOT="/home/travis/build/GodotNativeTools/godot-cpp/android-sdk/ndk-bundle"
+      env: ADDITIONAL_FLAGS="android_arch=arm64v8" PLATFORM="android"
       addons:
         apt:
           sources:
@@ -46,9 +51,41 @@ matrix:
       os: osx
       osx_image: xcode10.2
       compiler: clang
-      env: ADDITIONAL_FLAGS="" PLATFORM="ios"
+      env: ADDITIONAL_FLAGS="" PLATFORM="iphone"
+      addons:
+        homebrew:
+          packages:
+            - jq
+            - p7zip
 
 install:
+  - if [[ "$PLATFORM" == "x11" ]]; then
+    sudo apt-get install -y build-essential scons pkg-config libx11-dev libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev libfreetype6-dev libssl-dev libudev-dev libxi-dev libxrandr-dev yasm;
+    fi
+
+  - if [[ "$PLATFORM" == "android" ]]; then
+    cd .. && sh godot-fmod-integration/.travis/download_android_sdk.sh && cd godot-fmod-integration;
+    fi
+
+  - rm -rf api
+  - mv .travis/download-fmod.sh ./ && chmod +x download-fmod.sh && ./download-fmod.sh $FMODUSER $FMODPASS $PLATFORM
+  - if [[ "$PLATFORM" == "x11" ]]; then tar -xvf fmodstudioapi20001linux.tar.gz; fi
+  - if [[ "$PLATFORM" == "osx" ]]; then hdiutil attach fmodstudioapi20001osx.dmg; fi
+  - if [[ "$PLATFORM" == "windows" ]]; then
+    7z x fmodstudioapi20001win-installer.exe;
+    mv api/core/lib/x64/fmod_vc.lib api/core/lib/x64/fmod64_vc.windows.tools.64.lib;
+    mv api/studio/lib/x64/fmodstudio_vc.lib api/studio/lib/x64/fmodstudio64_vc.windows.tools.64.lib;
+    fi
+  - if [[ "$PLATFORM" == "iphone" ]]; then hdiutil attach fmodstudioapi20001ios.dmg; fi
+  - if [[ "$PLATFORM" == "android" ]]; then tar -xvf fmodstudioapi20001android.tar.gz; fi
+  - if [[ "$PLATFORM" == "x11" ]]; then mv fmodstudioapi20001linux/api ./; fi
+  - if [[ "$PLATFORM" == "osx" ]]; then cp -r "/Volumes/FMOD Programmers API Mac/FMOD Programmers API/api" ./; fi
+  - if [[ "$PLATFORM" == "iphone" ]]; then cp -r "/Volumes/FMOD Programmers API iOS/FMOD Programmers API/api" ./; fi
+  - if [[ "$PLATFORM" == "android" ]]; then mv fmodstudioapi20001android/api ./; fi
+
+  - cd .. && git clone https://github.com/godotengine/godot.git && cd godot && git checkout 3.1.1-stable
+  - mv ../godot-fmod-integration modules/fmod
+
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
     brew update;
     brew install scons p7zip;
@@ -58,28 +95,6 @@ install:
     curl -LO https://downloads.sourceforge.net/project/scons/scons-local/3.0.5/scons-local-3.0.5.zip;
     unzip scons-local-3.0.5.zip;
     fi
-
-  - rm -rf api
-  - sh .travis/download-fmod.sh $FMODUSER $FMODPASS $PLATFORM
-  - if [[ "$PLATFORM" == "x11" ]]; then tar -xvf fmodstudioapi11012linux.tar.gz; fi
-  - if [[ "$PLATFORM" == "osx" ]]; then hdiutil attach fmodstudioapi11012osx.dmg; fi
-  - if [[ "$PLATFORM" == "windows" ]]; then 7z x fmodstudioapi11012win-installer.exe; fi
-  - if [[ "$PLATFORM" == "ios" ]]; then hdiutil attach fmodstudioapi11012ios.dmg; fi
-  - if [[ "$PLATFORM" == "android" ]]; then tar -xvf fmodstudioapi11012android.tar.gz; fi
-  - if [[ "$PLATFORM" == "x11" ]]; then mv fmodstudioapi11012linux/api ./; fi
-  - if [[ "$PLATFORM" == "osx" ]]; then cp -r "/Volumes/FMOD Programmers API Mac/FMOD Programmers API/api" ./; fi
-  - if [[ "$PLATFORM" == "windows" ]]; then mv api/ ./; fi
-  - if [[ "$PLATFORM" == "ios" ]]; then cp -r "/Volumes/FMOD Programmers API iOS/FMOD Programmers API/api" ./; fi
-  - if [[ "$PLATFORM" == "android" ]]; then mv fmodstudioapi11012android/api ./; fi
-
-  - cd .. && git clone https://github.com/godotengine/godot.git && git checkout 3.1.1-stable
-  - mv godot-fmod-integration godot/modules/fmod
-
-  - if [[ "$PLATFORM" == "android" ]]; then
-    sh .travis/download_android_sdk.sh;
-    fi
-
-  - cd godot
 
 script:
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
