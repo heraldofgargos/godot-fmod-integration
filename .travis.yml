@@ -11,7 +11,7 @@ matrix:
         apt:
           packages:
             [scons, pkg-config, build-essential, p7zip-full]
-      env: PLATFORM=x11 ADDITIONAL_FLAGS="tools=no use_llvm=yes bits=64"
+      env: PLATFORM=x11 ADDITIONAL_FLAGS="tools=no use_llvm=yes target=release bits=64"
 
     - name: macOS
       os: osx
@@ -29,7 +29,7 @@ matrix:
 
     - name: Android ARM
       os: linux
-      env: ADDITIONAL_FLAGS="android_arch=armv7" PLATFORM="android"
+      env: ADDITIONAL_FLAGS="android_arch=armv7 target=release" PLATFORM="android"
       addons:
         apt:
           sources:
@@ -39,7 +39,7 @@ matrix:
 
     - name: Android ARM64
       os: linux
-      env: ADDITIONAL_FLAGS="android_arch=arm64v8" PLATFORM="android"
+      env: ADDITIONAL_FLAGS="android_arch=arm64v8 target=release" PLATFORM="android"
       addons:
         apt:
           sources:
@@ -51,7 +51,7 @@ matrix:
       os: osx
       osx_image: xcode10.2
       compiler: clang
-      env: ADDITIONAL_FLAGS="" PLATFORM="iphone"
+      env: ADDITIONAL_FLAGS="target=release" PLATFORM="iphone"
       addons:
         homebrew:
           packages:
@@ -108,3 +108,26 @@ script:
   - if [[ "$STATIC_CHECKS" == "yes" ]]; then
     sh ./misc/travis/clang-format.sh;
     fi
+
+  - if [[ "$ADDITIONAL_FLAGS" == "android_arch=arm64v8 target=release" ]]; then
+    cp platform/android/java/libs/release/arm64-v8a/libgodot_android.so bin/libgodot.android.opt.armv8.so;
+    fi
+
+  - if [[  "$ADDITIONAL_FLAGS" == "android_arch=armv7 target=release" ]]; then
+    cp platform/android/java/libs/release/armeabi-v7a/libgodot_android.so bin/libgodot.android.opt.armv7.neon.so;
+    fi
+
+deploy:
+  provider: releases
+  api_key:
+    secure: $TRAVIS_TOKEN
+  file:
+    - "bin/godot.windows.tools.64.exe"
+    - "bin/godot.x11.opt.64.llvm"
+    - "bin/godot.osx.tools.64"
+    - "bin/libgodot.android.opt.armv8.so"
+    - "bin/libgodot.android.opt.armv7.neon.so"
+    - "bin/libgodot.iphone.opt.arm64.a"
+  skip_cleanup: true
+  on:
+    tags: true
