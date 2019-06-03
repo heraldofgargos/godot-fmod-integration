@@ -29,7 +29,7 @@ matrix:
 
     - name: Android ARM
       os: linux
-      env: ADDITIONAL_FLAGS="android_arch=armv7 target=release" PLATFORM="android"
+      env: ADDITIONAL_FLAGS="android_arch=armv7" PLATFORM="android"
       addons:
         apt:
           sources:
@@ -39,7 +39,7 @@ matrix:
 
     - name: Android ARM64
       os: linux
-      env: ADDITIONAL_FLAGS="android_arch=arm64v8 target=release" PLATFORM="android"
+      env: ADDITIONAL_FLAGS="android_arch=arm64v8" PLATFORM="android"
       addons:
         apt:
           sources:
@@ -103,18 +103,29 @@ script:
     export SCONS="scons";
     fi
 
-  - $SCONS platform=$PLATFORM $ADDITIONAL_FLAGS;
+  - if [[ "$PLATFORM" == "android" ]]; then
+    $SCONS platform=$PLATFORM $ADDITIONAL_FLAGS target=release;
+    $SCONS platform=$PLATFORM $ADDITIONAL_FLAGS target=debug;
+    else
+    $SCONS platform=$PLATFORM $ADDITIONAL_FLAGS;
+    fi
 
   - if [[ "$STATIC_CHECKS" == "yes" ]]; then
     sh ./misc/travis/clang-format.sh;
     fi
 
-  - if [[ "$ADDITIONAL_FLAGS" == "android_arch=arm64v8 target=release" ]]; then
-    cp platform/android/java/libs/release/arm64-v8a/libgodot_android.so bin/libgodot.android.opt.armv8.so;
+  - if [[ "$ADDITIONAL_FLAGS" == "android_arch=arm64v8" ]]; then
+    rm platform/android/java/libs/release/arm64-v8a/libfmod.so && rm platform/android/java/libs/release/arm64-v8a/libfmodstudio.so;
+    rm platform/android/java/libs/debug/arm64-v8a/libfmod.so && rm platform/android/java/libs/debug/arm64-v8a/libfmodstudio.so;
+    tar zcvf libgodot.android_arm64-v8a.tar.gz platform/android/java/libs/;
+    mv libgodot.android_arm64-v8a.tar.gz bin/;
     fi
 
-  - if [[  "$ADDITIONAL_FLAGS" == "android_arch=armv7 target=release" ]]; then
-    cp platform/android/java/libs/release/armeabi-v7a/libgodot_android.so bin/libgodot.android.opt.armv7.neon.so;
+  - if [[ "$ADDITIONAL_FLAGS" == "android_arch=armv7" ]]; then
+    rm platform/android/java/libs/release/armeabi-v7a/libfmod.so && rm platform/android/java/libs/release/armeabi-v7a/libfmodstudio.so;
+    rm platform/android/java/libs/debug/armeabi-v7a/libfmod.so && rm platform/android/java/libs/debug/armeabi-v7a/libfmodstudio.so;
+    tar zcvf libgodot.android_armeabi-v7a.tar.gz platform/android/java/libs/;
+    mv libgodot.android_armeabi-v7a.tar.gz bin/;
     fi
 
 deploy:
@@ -125,8 +136,8 @@ deploy:
     - "bin/godot.windows.tools.64.exe"
     - "bin/godot.x11.opt.64.llvm"
     - "bin/godot.osx.tools.64"
-    - "bin/libgodot.android.opt.armv8.so"
-    - "bin/libgodot.android.opt.armv7.neon.so"
+    - "bin/libgodot.android_arm64-v8a.tar.gz"
+    - "bin/libgodot.android_armeabi-v7a.tar.gz"
     - "bin/libgodot.iphone.opt.arm64.a"
   skip_cleanup: true
   on:
