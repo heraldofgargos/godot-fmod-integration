@@ -88,7 +88,9 @@ void Fmod::updateInstance3DAttributes(FMOD::Studio::EventInstance *instance, Obj
 		if (ci != nullptr) {
 			Transform2D t2d = ci->get_transform();
 			Vector2 posVector = t2d.get_origin() / distanceScale;
-			Vector3 pos(posVector.x, posVector.y, 0.0f),
+			// in 2D the distance is measured in pixels and position translates to screen coords
+			// so we don't have to utilise FMOD's Y axis
+			Vector3 pos(posVector.x, 0.0f, posVector.y),
 					up(0, 1, 0), forward(0, 0, 1), vel(0, 0, 0);
 			FMOD_3D_ATTRIBUTES attr = get3DAttributes(toFmodVector(pos), toFmodVector(up), toFmodVector(forward), toFmodVector(vel));
 			checkErrors(instance->set3DAttributes(&attr));
@@ -123,7 +125,9 @@ void Fmod::setListenerAttributes() {
 	if (ci != nullptr) {
 		Transform2D t2d = ci->get_transform();
 		Vector2 posVector = t2d.get_origin() / distanceScale;
-		Vector3 pos(posVector.x, posVector.y, 0.0f),
+		// in 2D the distance is measured in pixels and position translates to screen coords
+		// so we don't have to utilise FMOD's Y axis
+		Vector3 pos(posVector.x, 0.0f, posVector.y),
 				up(0, 1, 0), forward(0, 0, 1), vel(0, 0, 0); // TODO: add doppler
 		FMOD_3D_ATTRIBUTES attr = get3DAttributes(toFmodVector(pos), toFmodVector(up), toFmodVector(forward), toFmodVector(vel));
 		checkErrors(system->setListenerAttributes(0, &attr));
