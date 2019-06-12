@@ -2,11 +2,11 @@
 
 A Godot C++ module that provides an integration and GDScript bindings for the FMOD Studio API.
 
-FMOD is an audio engine and middleware solution for interactive audio in games. It has been the audio engine behind many titles such as Transistor, Pyre and Celeste. [More on FMOD's website](https://www.fmod.com/).
+FMOD is an audio engine and middleware solution for interactive audio in games. It has been the audio engine behind many titles such as Transistor, Into the Breach and Celeste. [More on FMOD's website](https://www.fmod.com/).
 
 This module exposes most of the Studio API functions to Godot's GDScript and also provides helpers for performing common functions like attaching Studio events to Godot nodes and playing 3D/positional audio. _It is still very much a work in progress and some API functions are not yet exposed._ Feel free to tweak/extend it based on your project's needs.
 
-**Note:** FMOD provides a C# wrapper for their API which is used in the Unity integration and it is possible to use the same wrapper to build an integration for Godot in C#. However do note that this would only work on a Mono build of Godot and performance might not be on the same level as a Native/C++ integration. 
+**Note:** FMOD also provides a C# wrapper for their API which is used in the Unity integration and it is possible to use the same wrapper to build an integration for Godot in C#. However do note that this would only work on a Mono build of Godot and performance might not be on the same level as a Native/C++ integration.
 
 ## Installing the module
 
@@ -16,7 +16,6 @@ This module exposes most of the Studio API functions to Godot's GDScript and als
 4. Copy the contents of the `api` directory of the FMOD API into the module's `api` directory `modules/fmod/api`. On Windows this is (usually) found at `C:/Program Files (x86)/FMOD SoundSystem/FMOD Studio API Windows/api`.
 5. Recompile the engine. For more information on compiling the engine, refer to the [Godot documentation](https://docs.godotengine.org/en/latest/development/compiling/index.html).
 6. Place the FMOD library files within the `bin` directory for Godot to start. Eg. on Windows these would be `fmod.dll` and `fmodstudio.dll`. When shipping, these files have to be included with the release.
-
 
 ## Using the module
 
@@ -61,16 +60,12 @@ func _process(delta):
 
 ### Calling Studio events
 
-Following is an example of an event instance called manually (ie. not directly managed by the integration). These instances are identified by a unique ID in the form of a string that you must generate in script ideally through a UUID generator. You could write one yourself or use something like [UUID for Godot](https://github.com/binogure-studio/godot-uuid). Note that the string could be anything as long as it is unique within the current instance pool. Remember to release the instance once you're done with it.
+One-shots are great for quick sounds which you would want to simply fire and forget. But what about something a bit more complex like a looping sound or an interactive music event with a bunch of states? Here's an example of a Studio event called manually (ie. not directly managed by the integration). You can then call functions on that specific instance such as setting parameters. Remember to release the instance once you're done with it!
 
 ```gdscript
-# unique identifier used to id your event instance
-# throughout its lifecycle
-var my_music_event = UUID.new()
-
-# create an event instance associated with the unique identifier
+# create an event instance
 # this is a music event that has been authored in the Studio editor
-FMOD.event_create_instance(my_music_event, "event:/Waveshaper - Wisdom of Rage")
+var my_music_event = FMOD.event_create_instance("event:/Waveshaper - Wisdom of Rage")
 
 # start the event
 FMOD.event_start(my_music_event)
@@ -117,19 +112,19 @@ FMOD.play_one_shot_attached_with_params("event:/Footstep", self, { "Surface": 1.
 
 # attaches a manually called instance to a Node
 # once attached 3D attributes are automatically set every frame (when update is called)
-FMOD.attach_instance_to_node(uuid, self)
+FMOD.attach_instance_to_node(event_instance, self)
 
 # detaches the instance from its Node
-FMOD.detach_instance_from_node(uuid)
+FMOD.detach_instance_from_node(event_instance)
 ```
 
 ### Playing sounds using FMOD Core / Low Level API
 
-You can load and play any sound file in your project directory by using the FMOD Low Level API bindings. Similar to Studio Events these instances are identified by a UUID generated in script. Any instances you create must be released manually. Refer to FMOD's documentation pages for a list of compatible sound formats.
+You can load and play any sound file in your project directory by using the FMOD Low Level API bindings. Similar to Studio events these instances have to be released manually. Refer to FMOD's documentation pages for a list of compatible sound formats.
 
 ```gdscript
-# note that this function returns the UUID back to you as its return value
-var my_sound = FMOD.sound_load(UUID.new(), "./ta-da.wav", Fmod.FMOD_DEFAULT)
+# create a sound
+var my_sound = FMOD.sound_load("./ta-da.wav", Fmod.FMOD_DEFAULT)
 
 FMOD.sound_play(my_sound)
 
@@ -150,16 +145,19 @@ In order to get FMOD working on Android, you need to make Fmod java static initi
 template. To do so, follow the next steps.
 
 - Add fmod.jar as dependency in your project.
-In order to add FMOD to Gradle you should have dependencies looking like this :  
+  In order to add FMOD to Gradle you should have dependencies looking like this :
+
 ```
 dependencies {
 	implementation "com.android.support:support-core-utils:28.0.0"
 	compile files("libs/fmod.jar")
 }
 ```
-- Modify `onCreate` and `onDestroy` methods in `Godot` Java class  
 
-For `onCreate` you should initialize Java part of FMOD.  
+- Modify `onCreate` and `onDestroy` methods in `Godot` Java class
+
+For `onCreate` you should initialize Java part of FMOD.
+
 ```java
 	@Override
 	protected void onCreate(Bundle icicle) {
@@ -172,6 +170,7 @@ For `onCreate` you should initialize Java part of FMOD.
 ```
 
 For `onDestroy` method, you should close Java part of FMOD.
+
 ```java
 	@Override
 	protected void onDestroy() {
@@ -186,7 +185,7 @@ For `onDestroy` method, you should close Java part of FMOD.
 ```
 
 - Then run `./gradlew build` to generate an apk export template. You can then use it in your project to get FMOD working
-on Android.
+  on Android.
 
 ## Issues
 

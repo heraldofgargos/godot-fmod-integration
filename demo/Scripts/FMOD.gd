@@ -78,8 +78,8 @@ func bank_get_vca_count(path_to_bank):
 	
 
 ##### event functions #####
-func event_create_instance(uuid, event_path):
-	return FMOD.event_create_instance(uuid, event_path)
+func event_create_instance(event_path):
+	return FMOD.event_create_instance(event_path)
 	
 func event_get_parameter(uuid, parameter_name):
 	return FMOD.event_get_parameter(uuid, parameter_name)
@@ -167,8 +167,8 @@ func vca_set_volume(path_to_vca, volume):
 	return FMOD.vca_set_volume(path_to_vca, volume)
 	
 ##### Sound functions #####
-func sound_load(uuid, path_to_sound, mode):
-	return FMOD.sound_load(uuid, path_to_sound, mode)
+func sound_load(path_to_sound, mode):
+	return FMOD.sound_load(path_to_sound, mode)
 	
 func sound_play(uuid):
 	return FMOD.sound_play(uuid)
