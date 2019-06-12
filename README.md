@@ -112,10 +112,10 @@ FMOD.play_one_shot_attached_with_params("event:/Footstep", self, { "Surface": 1.
 
 # attaches a manually called instance to a Node
 # once attached 3D attributes are automatically set every frame (when update is called)
-FMOD.attach_instance_to_node(uuid, self)
+FMOD.attach_instance_to_node(event_instance, self)
 
 # detaches the instance from its Node
-FMOD.detach_instance_from_node(uuid)
+FMOD.detach_instance_from_node(event_instance)
 ```
 
 ### Playing sounds using FMOD Core / Low Level API
