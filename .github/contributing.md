@@ -3,7 +3,7 @@ Hey there! Thank you for your interest in my project. If you wish to contribute 
 
 ## What prior knowledge do I need
 
-These will mostly apply to programmers but if you are a sound designer or a composer there are other ways to contribute as well. Refer to the [contribution guidelines](https://github.com/alexfonseka/godot-fmod-integration/new/master/.github#contribution-guidelines) section.
+These will mostly apply to programmers but if you are a sound designer or a composer there are other ways to contribute as well. Refer to the [contribution guidelines](https://github.com/alexfonseka/godot-fmod-integration/blob/master/.github/contributing.md#contribution-guidelines) section.
 
 - You would need some basic knowledge of C++ and the FMOD API. 
 - A basic understanding of how the Godot game engine works. 
