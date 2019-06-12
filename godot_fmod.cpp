@@ -228,8 +228,7 @@ int Fmod::getBankVCACount(const String &pathToBank) {
 	return -1;
 }
 
-String Fmod::createEventInstance(const String &uuid, const String &eventPath) {
-	if (unmanagedEvents.has(uuid)) return uuid; // provided uuid is not valid
+unsigned int Fmod::createEventInstance(const String &eventPath) {
 	if (!eventDescriptions.has(eventPath)) {
 		FMOD::Studio::EventDescription *desc = nullptr;
 		checkErrors(system->getEvent(eventPath.ascii().get_data(), &desc));
@@ -238,58 +237,61 @@ String Fmod::createEventInstance(const String &uuid, const String &eventPath) {
 	auto desc = eventDescriptions.find(eventPath);
 	FMOD::Studio::EventInstance *instance;
 	checkErrors(desc->value()->createInstance(&instance));
-	if (instance)
-		unmanagedEvents.insert(uuid, instance);
-	return uuid;
+	if (instance) {
+		unsigned int instanceId = instanceIdCount + 1;
+		unmanagedEvents.insert(instanceId, instance);
+		return instanceId;
+	}
+	return 0;
 }
 
-float Fmod::getEventParameter(const String &uuid, const String &parameterName) {
+float Fmod::getEventParameter(unsigned int instanceId, const String &parameterName) {
 	float p = -1;
-	if (!unmanagedEvents.has(uuid)) return p;
-	auto i = unmanagedEvents.find(uuid);
+	if (!unmanagedEvents.has(instanceId)) return p;
+	auto i = unmanagedEvents.find(instanceId);
 	if (i->value())
 		checkErrors(i->value()->getParameterByName(parameterName.ascii().get_data(), &p));
 	return p;
 }
 
-void Fmod::setEventParameter(const String &uuid, const String &parameterName, float value) {
-	if (!unmanagedEvents.has(uuid)) return;
-	auto i = unmanagedEvents.find(uuid);
+void Fmod::setEventParameter(unsigned int instanceId, const String &parameterName, float value) {
+	if (!unmanagedEvents.has(instanceId)) return;
+	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) checkErrors(i->value()->setParameterByName(parameterName.ascii().get_data(), value));
 }
 
-void Fmod::releaseEvent(const String &uuid) {
-	if (!unmanagedEvents.has(uuid)) return;
-	auto i = unmanagedEvents.find(uuid);
+void Fmod::releaseEvent(unsigned int instanceId) {
+	if (!unmanagedEvents.has(instanceId)) return;
+	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) checkErrors(i->value()->release());
 }
 
-void Fmod::startEvent(const String &uuid) {
-	if (!unmanagedEvents.has(uuid)) return;
-	auto i = unmanagedEvents.find(uuid);
+void Fmod::startEvent(unsigned int instanceId) {
+	if (!unmanagedEvents.has(instanceId)) return;
+	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) checkErrors(i->value()->start());
 }
 
-void Fmod::stopEvent(const String &uuid, int stopMode) {
-	if (!unmanagedEvents.has(uuid)) return;
-	auto i = unmanagedEvents.find(uuid);
+void Fmod::stopEvent(unsigned int instanceId, int stopMode) {
+	if (!unmanagedEvents.has(instanceId)) return;
+	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) {
 		auto m = static_cast<FMOD_STUDIO_STOP_MODE>(stopMode);
 		checkErrors(i->value()->stop(m));
 	}
 }
 
-void Fmod::triggerEventCue(const String &uuid) {
-	if (!unmanagedEvents.has(uuid)) return;
-	auto i = unmanagedEvents.find(uuid);
+void Fmod::triggerEventCue(unsigned int instanceId) {
+	if (!unmanagedEvents.has(instanceId)) return;
+	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) checkErrors(i->value()->triggerCue());
 }
 
-int Fmod::getEventPlaybackState(const String &uuid) {
-	if (!unmanagedEvents.has(uuid))
+int Fmod::getEventPlaybackState(unsigned int instanceId) {
+	if (!unmanagedEvents.has(instanceId))
 		return -1;
 	else {
-		auto i = unmanagedEvents.find(uuid);
+		auto i = unmanagedEvents.find(instanceId);
 		if (i->value()) {
 			FMOD_STUDIO_PLAYBACK_STATE s;
 			checkErrors(i->value()->getPlaybackState(&s));
@@ -299,79 +301,79 @@ int Fmod::getEventPlaybackState(const String &uuid) {
 	}
 }
 
-bool Fmod::getEventPaused(const String &uuid) {
-	if (!unmanagedEvents.has(uuid)) return false;
-	auto i = unmanagedEvents.find(uuid);
+bool Fmod::getEventPaused(unsigned int instanceId) {
+	if (!unmanagedEvents.has(instanceId)) return false;
+	auto i = unmanagedEvents.find(instanceId);
 	bool paused = false;
 	if (i->value()) checkErrors(i->value()->getPaused(&paused));
 	return paused;
 }
 
-void Fmod::setEventPaused(const String &uuid, bool paused) {
-	if (!unmanagedEvents.has(uuid)) return;
-	auto i = unmanagedEvents.find(uuid);
+void Fmod::setEventPaused(unsigned int instanceId, bool paused) {
+	if (!unmanagedEvents.has(instanceId)) return;
+	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) checkErrors(i->value()->setPaused(paused));
 }
 
-float Fmod::getEventPitch(const String &uuid) {
-	if (!unmanagedEvents.has(uuid)) return 0.0f;
-	auto i = unmanagedEvents.find(uuid);
+float Fmod::getEventPitch(unsigned int instanceId) {
+	if (!unmanagedEvents.has(instanceId)) return 0.0f;
+	auto i = unmanagedEvents.find(instanceId);
 	float pitch = 0.0f;
 	if (i->value()) checkErrors(i->value()->getPitch(&pitch));
 	return pitch;
 }
 
-void Fmod::setEventPitch(const String &uuid, float pitch) {
-	if (!unmanagedEvents.has(uuid)) return;
-	auto i = unmanagedEvents.find(uuid);
+void Fmod::setEventPitch(unsigned int instanceId, float pitch) {
+	if (!unmanagedEvents.has(instanceId)) return;
+	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) checkErrors(i->value()->setPitch(pitch));
 }
 
-float Fmod::getEventVolume(const String &uuid) {
-	if (!unmanagedEvents.has(uuid)) return 0.0f;
-	auto i = unmanagedEvents.find(uuid);
+float Fmod::getEventVolume(unsigned int instanceId) {
+	if (!unmanagedEvents.has(instanceId)) return 0.0f;
+	auto i = unmanagedEvents.find(instanceId);
 	float volume = 0.0f;
 	if (i->value()) checkErrors(i->value()->getVolume(&volume));
 	return volume;
 }
 
-void Fmod::setEventVolume(const String &uuid, float volume) {
-	if (!unmanagedEvents.has(uuid)) return;
-	auto i = unmanagedEvents.find(uuid);
+void Fmod::setEventVolume(unsigned int instanceId, float volume) {
+	if (!unmanagedEvents.has(instanceId)) return;
+	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) checkErrors(i->value()->setVolume(volume));
 }
 
-int Fmod::getEventTimelinePosition(const String &uuid) {
-	if (!unmanagedEvents.has(uuid)) return 0;
-	auto i = unmanagedEvents.find(uuid);
+int Fmod::getEventTimelinePosition(unsigned int instanceId) {
+	if (!unmanagedEvents.has(instanceId)) return 0;
+	auto i = unmanagedEvents.find(instanceId);
 	int tp = 0;
 	if (i->value()) checkErrors(i->value()->getTimelinePosition(&tp));
 	return tp;
 }
 
-void Fmod::setEventTimelinePosition(const String &uuid, int position) {
-	if (!unmanagedEvents.has(uuid)) return;
-	auto i = unmanagedEvents.find(uuid);
+void Fmod::setEventTimelinePosition(unsigned int instanceId, int position) {
+	if (!unmanagedEvents.has(instanceId)) return;
+	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) checkErrors(i->value()->setTimelinePosition(position));
 }
 
-float Fmod::getEventReverbLevel(const String &uuid, int index) {
-	if (!unmanagedEvents.has(uuid)) return 0.0f;
-	auto i = unmanagedEvents.find(uuid);
+float Fmod::getEventReverbLevel(unsigned int instanceId, int index) {
+	if (!unmanagedEvents.has(instanceId)) return 0.0f;
+	auto i = unmanagedEvents.find(instanceId);
 	float rvl = 0.0f;
 	if (i->value()) checkErrors(i->value()->getReverbLevel(index, &rvl));
 	return rvl;
 }
 
-void Fmod::setEventReverbLevel(const String &uuid, int index, float level) {
-	if (!unmanagedEvents.has(uuid)) return;
-	auto i = unmanagedEvents.find(uuid);
+void Fmod::setEventReverbLevel(unsigned int instanceId, int index, float level) {
+	if (!unmanagedEvents.has(instanceId)) return;
+	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) checkErrors(i->value()->setReverbLevel(index, level));
 }
 
-bool Fmod::isEventVirtual(const String &uuid) {
-	if (!unmanagedEvents.has(uuid)) return false;
-	auto i = unmanagedEvents.find(uuid);
+bool Fmod::isEventVirtual(unsigned int instanceId) {
+	if (!unmanagedEvents.has(instanceId)) return false;
+	auto i = unmanagedEvents.find(instanceId);
 	bool v = false;
 	if (i->value()) checkErrors(i->value()->isVirtual(&v));
 	return v;
@@ -568,18 +570,18 @@ void Fmod::playOneShotAttachedWithParams(const String &eventName, Object *gameOb
 	}
 }
 
-void Fmod::attachInstanceToNode(const String &uuid, Object *gameObj) {
-	if (!unmanagedEvents.has(uuid) || isNull(gameObj)) return;
-	auto i = unmanagedEvents.find(uuid);
+void Fmod::attachInstanceToNode(unsigned int instanceId, Object *gameObj) {
+	if (!unmanagedEvents.has(instanceId) || isNull(gameObj)) return;
+	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) {
 		AttachedOneShot aShot = { i->value(), gameObj };
 		attachedOneShots.push_back(aShot);
 	}
 }
 
-void Fmod::detachInstanceFromNode(const String &uuid) {
-	if (!unmanagedEvents.has(uuid)) return;
-	auto instance = unmanagedEvents.find(uuid);
+void Fmod::detachInstanceFromNode(unsigned int instanceId) {
+	if (!unmanagedEvents.has(instanceId)) return;
+	auto instance = unmanagedEvents.find(instanceId);
 	if (instance->value()) {
 		for (int i = 0; attachedOneShots.size(); i++) {
 			auto attachedInstance = attachedOneShots.get(i).instance;
@@ -607,33 +609,33 @@ void Fmod::setVCAVolume(const String &VCAPath, float volume) {
 	checkErrors(vca->value()->setVolume(volume));
 }
 
-void Fmod::playSound(const String &uuid) {
-	if (sounds.has(uuid)) {
-		auto s = sounds.find(uuid)->value();
+void Fmod::playSound(unsigned int instanceId) {
+	if (sounds.has(instanceId)) {
+		auto s = sounds.find(instanceId)->value();
 		auto c = channels.find(s)->value();
 		checkErrors(c->setPaused(false));
 	}
 }
 
-void Fmod::setSoundPaused(const String &uuid, bool paused) {
-	if (sounds.has(uuid)) {
-		auto s = sounds.find(uuid)->value();
+void Fmod::setSoundPaused(unsigned int instanceId, bool paused) {
+	if (sounds.has(instanceId)) {
+		auto s = sounds.find(instanceId)->value();
 		auto c = channels.find(s)->value();
 		checkErrors(c->setPaused(paused));
 	}
 }
 
-void Fmod::stopSound(const String &uuid) {
-	if (sounds.has(uuid)) {
-		auto s = sounds.find(uuid)->value();
+void Fmod::stopSound(unsigned int instanceId) {
+	if (sounds.has(instanceId)) {
+		auto s = sounds.find(instanceId)->value();
 		auto c = channels.find(s)->value();
 		checkErrors(c->stop());
 	}
 }
 
-bool Fmod::isSoundPlaying(const String &uuid) {
-	if (sounds.has(uuid)) {
-		auto s = sounds.find(uuid)->value();
+bool Fmod::isSoundPlaying(unsigned int instanceId) {
+	if (sounds.has(instanceId)) {
+		auto s = sounds.find(instanceId)->value();
 		auto c = channels.find(s)->value();
 		bool isPlaying = false;
 		checkErrors(c->isPlaying(&isPlaying));
@@ -642,17 +644,17 @@ bool Fmod::isSoundPlaying(const String &uuid) {
 	return false;
 }
 
-void Fmod::setSoundVolume(const String &uuid, float volume) {
-	if (sounds.has(uuid)) {
-		auto s = sounds.find(uuid)->value();
+void Fmod::setSoundVolume(unsigned int instanceId, float volume) {
+	if (sounds.has(instanceId)) {
+		auto s = sounds.find(instanceId)->value();
 		auto c = channels.find(s)->value();
 		checkErrors(c->setVolume(volume));
 	}
 }
 
-float Fmod::getSoundVolume(const String &uuid) {
-	if (sounds.has(uuid)) {
-		auto s = sounds.find(uuid)->value();
+float Fmod::getSoundVolume(unsigned int instanceId) {
+	if (sounds.has(instanceId)) {
+		auto s = sounds.find(instanceId)->value();
 		auto c = channels.find(s)->value();
 		float volume = 0.f;
 		checkErrors(c->getVolume(&volume));
@@ -661,9 +663,9 @@ float Fmod::getSoundVolume(const String &uuid) {
 	return 0.f;
 }
 
-float Fmod::getSoundPitch(const String &uuid) {
-	if (sounds.has(uuid)) {
-		auto s = sounds.find(uuid)->value();
+float Fmod::getSoundPitch(unsigned int instanceId) {
+	if (sounds.has(instanceId)) {
+		auto s = sounds.find(instanceId)->value();
 		auto c = channels.find(s)->value();
 		float pitch = 0.f;
 		checkErrors(c->getPitch(&pitch));
@@ -672,31 +674,33 @@ float Fmod::getSoundPitch(const String &uuid) {
 	return 0.f;
 }
 
-void Fmod::setSoundPitch(const String &uuid, float pitch) {
-	if (sounds.has(uuid)) {
-		auto s = sounds.find(uuid)->value();
+void Fmod::setSoundPitch(unsigned int instanceId, float pitch) {
+	if (sounds.has(instanceId)) {
+		auto s = sounds.find(instanceId)->value();
 		auto c = channels.find(s)->value();
 		checkErrors(c->setPitch(pitch));
 	}
 }
 
-String Fmod::loadSound(const String &uuid, const String &path, int mode) {
-	if (!sounds.has(path)) {
-		FMOD::Sound *sound = nullptr;
-		checkErrors(coreSystem->createSound(path.ascii().get_data(), mode, nullptr, &sound));
-		if (sound) {
-			sounds.insert(uuid, sound);
-			FMOD::Channel *channel = nullptr;
-			checkErrors(coreSystem->playSound(sound, nullptr, true, &channel));
-			if (channel) channels.insert(sound, channel);
+unsigned int Fmod::loadSound(const String &path, int mode) {
+	FMOD::Sound *sound = nullptr;
+	checkErrors(coreSystem->createSound(path.ascii().get_data(), mode, nullptr, &sound));
+	if (sound) {
+		unsigned int instanceId = instanceIdCount + 1;
+		sounds.insert(instanceId, sound);
+		FMOD::Channel *channel = nullptr;
+		checkErrors(coreSystem->playSound(sound, nullptr, true, &channel));
+		if (channel) {
+			channels.insert(sound, channel);
+			return instanceId;
 		}
 	}
-	return uuid;
+	return 0;
 }
 
-void Fmod::releaseSound(const String &path) {
-	if (!sounds.has(path)) return; // sound is not loaded
-	auto sound = sounds.find(path);
+void Fmod::releaseSound(unsigned int instanceId) {
+	if (!sounds.has(instanceId)) return; // sound is not loaded
+	auto sound = sounds.find(instanceId);
 	if (sound->value()) checkErrors(sound->value()->release());
 }
 
@@ -718,15 +722,14 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("system_set_software_format", "sample_rate", "speaker_mode", "num_raw_speakers"), &Fmod::setSoftwareFormat);
 	ClassDB::bind_method(D_METHOD("system_set_parameter", "name", "value"), &Fmod::setGlobalParameter);
 	ClassDB::bind_method(D_METHOD("system_get_parameter", "name"), &Fmod::getGlobalParameter);
-	
 
 	/* integration helper functions */
 	ClassDB::bind_method(D_METHOD("play_one_shot", "event_name", "node"), &Fmod::playOneShot);
 	ClassDB::bind_method(D_METHOD("play_one_shot_with_params", "event_name", "node", "initial_parameters"), &Fmod::playOneShotWithParams);
 	ClassDB::bind_method(D_METHOD("play_one_shot_attached", "event_name", "node"), &Fmod::playOneShotAttached);
 	ClassDB::bind_method(D_METHOD("play_one_shot_attached_with_params", "event_name", "node", "initial_parameters"), &Fmod::playOneShotAttachedWithParams);
-	ClassDB::bind_method(D_METHOD("attach_instance_to_node", "uuid", "node"), &Fmod::attachInstanceToNode);
-	ClassDB::bind_method(D_METHOD("detach_instance_from_node", "uuid"), &Fmod::detachInstanceFromNode);
+	ClassDB::bind_method(D_METHOD("attach_instance_to_node", "id", "node"), &Fmod::attachInstanceToNode);
+	ClassDB::bind_method(D_METHOD("detach_instance_from_node", "id"), &Fmod::detachInstanceFromNode);
 
 	/* bank functions */
 	ClassDB::bind_method(D_METHOD("bank_load", "path_to_bank", "flags"), &Fmod::loadbank);
@@ -738,25 +741,25 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("bank_get_vca_count", "path_to_bank"), &Fmod::getBankVCACount);
 
 	/* event functions */
-	ClassDB::bind_method(D_METHOD("event_create_instance", "uuid", "event_path"), &Fmod::createEventInstance);
-	ClassDB::bind_method(D_METHOD("event_get_parameter", "uuid", "parameter_name"), &Fmod::getEventParameter);
-	ClassDB::bind_method(D_METHOD("event_set_parameter", "uuid", "parameter_name", "value"), &Fmod::setEventParameter);
-	ClassDB::bind_method(D_METHOD("event_release", "uuid"), &Fmod::releaseEvent);
-	ClassDB::bind_method(D_METHOD("event_start", "uuid"), &Fmod::startEvent);
-	ClassDB::bind_method(D_METHOD("event_stop", "uuid", "stop_mode"), &Fmod::stopEvent);
-	ClassDB::bind_method(D_METHOD("event_trigger_cue", "uuid"), &Fmod::triggerEventCue);
-	ClassDB::bind_method(D_METHOD("event_get_playback_state", "uuid"), &Fmod::getEventPlaybackState);
-	ClassDB::bind_method(D_METHOD("event_get_paused", "uuid"), &Fmod::getEventPaused);
-	ClassDB::bind_method(D_METHOD("event_set_paused", "uuid", "paused"), &Fmod::setEventPaused);
-	ClassDB::bind_method(D_METHOD("event_get_pitch", "uuid"), &Fmod::getEventPitch);
-	ClassDB::bind_method(D_METHOD("event_set_pitch", "uuid", "pitch"), &Fmod::setEventPitch);
-	ClassDB::bind_method(D_METHOD("event_get_volume", "uuid"), &Fmod::getEventVolume);
-	ClassDB::bind_method(D_METHOD("event_set_volume", "uuid", "volume"), &Fmod::setEventVolume);
-	ClassDB::bind_method(D_METHOD("event_get_timeline_position", "uuid"), &Fmod::getEventTimelinePosition);
-	ClassDB::bind_method(D_METHOD("event_set_timeline_position", "uuid", "position"), &Fmod::setEventTimelinePosition);
-	ClassDB::bind_method(D_METHOD("event_get_reverb_level", "uuid", "index"), &Fmod::getEventReverbLevel);
-	ClassDB::bind_method(D_METHOD("event_set_reverb_level", "uuid", "index", "level"), &Fmod::setEventReverbLevel);
-	ClassDB::bind_method(D_METHOD("event_is_virtual", "uuid"), &Fmod::isEventVirtual);
+	ClassDB::bind_method(D_METHOD("event_create_instance", "event_path"), &Fmod::createEventInstance);
+	ClassDB::bind_method(D_METHOD("event_get_parameter", "id", "parameter_name"), &Fmod::getEventParameter);
+	ClassDB::bind_method(D_METHOD("event_set_parameter", "id", "parameter_name", "value"), &Fmod::setEventParameter);
+	ClassDB::bind_method(D_METHOD("event_release", "id"), &Fmod::releaseEvent);
+	ClassDB::bind_method(D_METHOD("event_start", "id"), &Fmod::startEvent);
+	ClassDB::bind_method(D_METHOD("event_stop", "id", "stop_mode"), &Fmod::stopEvent);
+	ClassDB::bind_method(D_METHOD("event_trigger_cue", "id"), &Fmod::triggerEventCue);
+	ClassDB::bind_method(D_METHOD("event_get_playback_state", "id"), &Fmod::getEventPlaybackState);
+	ClassDB::bind_method(D_METHOD("event_get_paused", "id"), &Fmod::getEventPaused);
+	ClassDB::bind_method(D_METHOD("event_set_paused", "id", "paused"), &Fmod::setEventPaused);
+	ClassDB::bind_method(D_METHOD("event_get_pitch", "id"), &Fmod::getEventPitch);
+	ClassDB::bind_method(D_METHOD("event_set_pitch", "id", "pitch"), &Fmod::setEventPitch);
+	ClassDB::bind_method(D_METHOD("event_get_volume", "id"), &Fmod::getEventVolume);
+	ClassDB::bind_method(D_METHOD("event_set_volume", "id", "volume"), &Fmod::setEventVolume);
+	ClassDB::bind_method(D_METHOD("event_get_timeline_position", "id"), &Fmod::getEventTimelinePosition);
+	ClassDB::bind_method(D_METHOD("event_set_timeline_position", "id", "position"), &Fmod::setEventTimelinePosition);
+	ClassDB::bind_method(D_METHOD("event_get_reverb_level", "id", "index"), &Fmod::getEventReverbLevel);
+	ClassDB::bind_method(D_METHOD("event_set_reverb_level", "id", "index", "level"), &Fmod::setEventReverbLevel);
+	ClassDB::bind_method(D_METHOD("event_is_virtual", "id"), &Fmod::isEventVirtual);
 
 	/* bus functions */
 	ClassDB::bind_method(D_METHOD("bus_get_mute", "path_to_bus"), &Fmod::getBusMute);
@@ -772,16 +775,16 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("vca_set_volume", "path_to_vca", "volume"), &Fmod::setVCAVolume);
 
 	/* Sound functions */
-	ClassDB::bind_method(D_METHOD("sound_load", "uuid", "path_to_sound", "mode"), &Fmod::loadSound);
-	ClassDB::bind_method(D_METHOD("sound_play", "uuid"), &Fmod::playSound);
-	ClassDB::bind_method(D_METHOD("sound_stop", "uuid"), &Fmod::stopSound);
-	ClassDB::bind_method(D_METHOD("sound_release", "uuid"), &Fmod::releaseSound);
-	ClassDB::bind_method(D_METHOD("sound_set_paused", "uuid", "paused"), &Fmod::setSoundPaused);
-	ClassDB::bind_method(D_METHOD("sound_is_playing", "uuid"), &Fmod::isSoundPlaying);
-	ClassDB::bind_method(D_METHOD("sound_set_volume", "uuid", "volume"), &Fmod::setSoundVolume);
-	ClassDB::bind_method(D_METHOD("sound_get_volume", "uuid"), &Fmod::getSoundVolume);
-	ClassDB::bind_method(D_METHOD("sound_set_pitch", "uuid", "pitch"), &Fmod::setSoundPitch);
-	ClassDB::bind_method(D_METHOD("sound_get_pitch", "uuid"), &Fmod::getSoundPitch);
+	ClassDB::bind_method(D_METHOD("sound_load", "path_to_sound", "mode"), &Fmod::loadSound);
+	ClassDB::bind_method(D_METHOD("sound_play", "id"), &Fmod::playSound);
+	ClassDB::bind_method(D_METHOD("sound_stop", "id"), &Fmod::stopSound);
+	ClassDB::bind_method(D_METHOD("sound_release", "id"), &Fmod::releaseSound);
+	ClassDB::bind_method(D_METHOD("sound_set_paused", "id", "paused"), &Fmod::setSoundPaused);
+	ClassDB::bind_method(D_METHOD("sound_is_playing", "id"), &Fmod::isSoundPlaying);
+	ClassDB::bind_method(D_METHOD("sound_set_volume", "id", "volume"), &Fmod::setSoundVolume);
+	ClassDB::bind_method(D_METHOD("sound_get_volume", "id"), &Fmod::getSoundVolume);
+	ClassDB::bind_method(D_METHOD("sound_set_pitch", "id", "pitch"), &Fmod::setSoundPitch);
+	ClassDB::bind_method(D_METHOD("sound_get_pitch", "id"), &Fmod::getSoundPitch);
 
 	ClassDB::bind_method(D_METHOD("system_set_sound_3d_settings", "dopplerScale", "distanceFactor", "rollOffScale"), &Fmod::setSound3DSettings);
 
@@ -871,14 +874,12 @@ void Fmod::_bind_methods() {
 	BIND_CONSTANT(FMOD_IGNORETAGS);
 	BIND_CONSTANT(FMOD_LOWMEM);
 	BIND_CONSTANT(FMOD_VIRTUAL_PLAYFROMSTART);
-
 }
 
 Fmod::Fmod() {
 	system = nullptr, coreSystem = nullptr, listener = nullptr;
 	checkErrors(FMOD::Studio::System::create(&system));
 	checkErrors(system->getCoreSystem(&coreSystem));
-	distanceScale = 1.0;
 }
 
 Fmod::~Fmod() {
