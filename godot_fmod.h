@@ -71,8 +71,7 @@ class Fmod : public Object {
 	};
 	Vector<AttachedOneShot> attachedOneShots;
 
-	// events not directly managed by the integration
-	// referenced through uuids generated in script
+	// events not directly managed by the integration	
 	Map<unsigned int, FMOD::Studio::EventInstance *> unmanagedEvents;
 
 	FMOD_3D_ATTRIBUTES get3DAttributes(FMOD_VECTOR pos, FMOD_VECTOR up, FMOD_VECTOR forward, FMOD_VECTOR vel);
