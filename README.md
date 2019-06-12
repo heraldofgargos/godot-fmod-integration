@@ -187,6 +187,6 @@ For `onDestroy` method, you should close Java part of FMOD.
 - Then run `./gradlew build` to generate an apk export template. You can then use it in your project to get FMOD working
   on Android.
 
-## Issues
+## Contributing
 
-This project is still a work in progress and is probably not yet ready for use in full-blown production. If you run into issues (crashes, memory leaks, broken 3D sound etc.) open an issue or submit a PR with your contribution.
+This project is still a work in progress and is probably not yet ready for use in full-blown production. If you run into issues (crashes, memory leaks, broken 3D sound etc.) let us know about it through the issue tracker. If you are a programmer, sound designer or a composer and wish to contribute to the project, the contribution guidelines are available [here](https://github.com/alexfonseka/godot-fmod-integration/blob/master/.github/contributing.md). Thank you for being interested in this project! ✌
