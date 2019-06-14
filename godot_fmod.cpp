@@ -267,7 +267,10 @@ void Fmod::setEventParameter(unsigned int instanceId, const String &parameterNam
 void Fmod::releaseEvent(unsigned int instanceId) {
 	if (!unmanagedEvents.has(instanceId)) return;
 	auto i = unmanagedEvents.find(instanceId);
-	if (i->value()) checkErrors(i->value()->release());
+	if (i->value()) {
+		checkErrors(i->value()->release());
+		unmanagedEvents.erase(instanceId);
+	}
 }
 
 void Fmod::startEvent(unsigned int instanceId) {
@@ -705,7 +708,10 @@ unsigned int Fmod::loadSound(const String &path, int mode) {
 void Fmod::releaseSound(unsigned int instanceId) {
 	if (!sounds.has(instanceId)) return; // sound is not loaded
 	auto sound = sounds.find(instanceId);
-	if (sound->value()) checkErrors(sound->value()->release());
+	if (sound->value()) {
+		checkErrors(sound->value()->release());
+		sounds.erase(instanceId);
+	}
 }
 
 void Fmod::setSound3DSettings(float dopplerScale, float distanceFactor, float rollOffScale) {

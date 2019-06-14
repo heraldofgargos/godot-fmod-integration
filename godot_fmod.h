@@ -71,7 +71,7 @@ class Fmod : public Object {
 	};
 	Vector<AttachedOneShot> attachedOneShots;
 
-	// events not directly managed by the integration	
+	// events not directly managed by the integration
 	Map<unsigned int, FMOD::Studio::EventInstance *> unmanagedEvents;
 
 	FMOD_3D_ATTRIBUTES get3DAttributes(FMOD_VECTOR pos, FMOD_VECTOR up, FMOD_VECTOR forward, FMOD_VECTOR vel);
@@ -158,7 +158,7 @@ public:
 	void setSoundVolume(unsigned int instanceId, float volume);
 	float getSoundVolume(unsigned int instanceId);
 	float getSoundPitch(unsigned int instanceId);
-	void setSoundPitch(unsigned int instanceId, float pitch);	
+	void setSoundPitch(unsigned int instanceId, float pitch);
 
 	Fmod();
 	~Fmod();
