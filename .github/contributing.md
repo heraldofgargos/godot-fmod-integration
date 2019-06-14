@@ -20,3 +20,7 @@ These will mostly apply to programmers but if you are a sound designer or a comp
 ### Feature requests
 - The potential use cases you see for the (new) feature.
 - Your role (eg. Sound designer, composer, programmer etc.)
+
+### Pull requests
+- Include a short summary of the changes made.
+- Your changes and or additions must adhere to the [MIT License](https://github.com/alexfonseka/godot-fmod-integration/blob/master/LICENSE).
