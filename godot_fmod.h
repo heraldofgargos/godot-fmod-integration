@@ -53,14 +53,14 @@ class Fmod : public Object {
 	Object *listener;
 
 	bool nullListenerWarning = true;
+
 	float distanceScale = 1.0f;
-	unsigned int instanceIdCount = 0;
 
 	Map<String, FMOD::Studio::Bank *> banks;
 	Map<String, FMOD::Studio::EventDescription *> eventDescriptions;
 	Map<String, FMOD::Studio::Bus *> buses;
 	Map<String, FMOD::Studio::VCA *> VCAs;
-	Map<unsigned int, FMOD::Sound *> sounds;
+	Map<uint64_t, FMOD::Sound *> sounds;
 	Map<FMOD::Sound *, FMOD::Channel *> channels;
 
 	// keep track of one shot instances internally
@@ -72,7 +72,7 @@ class Fmod : public Object {
 	Vector<AttachedOneShot> attachedOneShots;
 
 	// events not directly managed by the integration
-	Map<unsigned int, FMOD::Studio::EventInstance *> unmanagedEvents;
+	Map<uint64_t, FMOD::Studio::EventInstance *> unmanagedEvents;
 
 	FMOD_3D_ATTRIBUTES get3DAttributes(FMOD_VECTOR pos, FMOD_VECTOR up, FMOD_VECTOR forward, FMOD_VECTOR vel);
 	FMOD_VECTOR toFmodVector(Vector3 vec);
@@ -102,8 +102,8 @@ public:
 	void playOneShotWithParams(const String &eventName, Object *gameObj, const Dictionary &parameters);
 	void playOneShotAttached(const String &eventName, Object *gameObj);
 	void playOneShotAttachedWithParams(const String &eventName, Object *gameObj, const Dictionary &parameters);
-	void attachInstanceToNode(unsigned int instanceId, Object *gameObj);
-	void detachInstanceFromNode(unsigned int instanceId);
+	void attachInstanceToNode(uint64_t instanceId, Object *gameObj);
+	void detachInstanceFromNode(uint64_t instanceId);
 
 	/* bank functions */
 	String loadbank(const String &pathToBank, int flags);
@@ -115,25 +115,25 @@ public:
 	int getBankVCACount(const String &pathToBank);
 
 	/* event functions */
-	unsigned int createEventInstance(const String &eventPath);
-	float getEventParameter(unsigned int instanceId, const String &parameterName);
-	void setEventParameter(unsigned int instanceId, const String &parameterName, float value);
-	void releaseEvent(unsigned int instanceId);
-	void startEvent(unsigned int instanceId);
-	void stopEvent(unsigned int instanceId, int stopMode);
-	void triggerEventCue(unsigned int instanceId);
-	int getEventPlaybackState(unsigned int instanceId);
-	bool getEventPaused(unsigned int instanceId);
-	void setEventPaused(unsigned int instanceId, bool paused);
-	float getEventPitch(unsigned int instanceId);
-	void setEventPitch(unsigned int instanceId, float pitch);
-	float getEventVolume(unsigned int instanceId);
-	void setEventVolume(unsigned int instanceId, float volume);
-	int getEventTimelinePosition(unsigned int instanceId);
-	void setEventTimelinePosition(unsigned int instanceId, int position);
-	float getEventReverbLevel(unsigned int instanceId, int index);
-	void setEventReverbLevel(unsigned int instanceId, int index, float level);
-	bool isEventVirtual(unsigned int instanceId);
+	uint64_t createEventInstance(const String &eventPath);
+	float getEventParameter(uint64_t instanceId, const String &parameterName);
+	void setEventParameter(uint64_t instanceId, const String &parameterName, float value);
+	void releaseEvent(uint64_t instanceId);
+	void startEvent(uint64_t instanceId);
+	void stopEvent(uint64_t instanceId, int stopMode);
+	void triggerEventCue(uint64_t instanceId);
+	int getEventPlaybackState(uint64_t instanceId);
+	bool getEventPaused(uint64_t instanceId);
+	void setEventPaused(uint64_t instanceId, bool paused);
+	float getEventPitch(uint64_t instanceId);
+	void setEventPitch(uint64_t instanceId, float pitch);
+	float getEventVolume(uint64_t instanceId);
+	void setEventVolume(uint64_t instanceId, float volume);
+	int getEventTimelinePosition(uint64_t instanceId);
+	void setEventTimelinePosition(uint64_t instanceId, int position);
+	float getEventReverbLevel(uint64_t instanceId, int index);
+	void setEventReverbLevel(uint64_t instanceId, int index, float level);
+	bool isEventVirtual(uint64_t instanceId);
 
 	/* bus functions */
 	bool getBusMute(const String &busPath);
@@ -149,16 +149,16 @@ public:
 	void setVCAVolume(const String &VCAPath, float volume);
 
 	/* Sound functions */
-	void playSound(unsigned int instanceId);
-	unsigned int loadSound(const String &path, int mode);
-	void releaseSound(unsigned int instanceId);
-	void setSoundPaused(unsigned int instanceId, bool paused);
-	void stopSound(unsigned int instanceId);
-	bool isSoundPlaying(unsigned int instanceId);
-	void setSoundVolume(unsigned int instanceId, float volume);
-	float getSoundVolume(unsigned int instanceId);
-	float getSoundPitch(unsigned int instanceId);
-	void setSoundPitch(unsigned int instanceId, float pitch);
+	void playSound(uint64_t instanceId);
+	uint64_t loadSound(const String &path, int mode);
+	void releaseSound(uint64_t instanceId);
+	void setSoundPaused(uint64_t instanceId, bool paused);
+	void stopSound(uint64_t instanceId);
+	bool isSoundPlaying(uint64_t instanceId);
+	void setSoundVolume(uint64_t instanceId, float volume);
+	float getSoundVolume(uint64_t instanceId);
+	float getSoundPitch(uint64_t instanceId);
+	void setSoundPitch(uint64_t instanceId, float pitch);
 
 	Fmod();
 	~Fmod();
