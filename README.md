@@ -118,9 +118,36 @@ FMOD.attach_instance_to_node(event_instance, self)
 FMOD.detach_instance_from_node(event_instance)
 ```
 
+### Timeline marker & music beat callbacks
+
+You can have events subscribe to Studio callbacks to implement rhythm based game mechanics. Event callbacks leverage Godot's signal system and you can connect your callback functions through the integration.
+
+```gdscript
+# create a new event instance
+var my_music_event = FMOD.event_create_instance("event:/schmid - 140 Part 2B")
+
+# request callbacks from this instance
+# in this case request both Marker and Beat callbacks
+FMOD.event_set_callback(my_music_event,
+Fmod.FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_MARKER | Fmod.FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_BEAT)
+
+# hook up our signals
+FMOD.connect("timeline_beat", self, "_on_beat")
+FMOD.connect("timeline_marker", self, "_on_marker")
+
+# will be called on every musical beat
+func _on_beat(params):
+	print(params)
+
+# will be called whenever a new marker is encountered
+func _on_marker(params):
+	print(params)
+```
+`params` is a dictionary which contains parameters passed in by FMOD. These vary from each callback. For beat callbacks it will contain fields such as the current beat, current bar, time signature etc. For marker callbacks it will contain the marker name etc. The event_id of the instance that triggered the callback will also be passed in. You can use this to filter out individual callbacks if multiple events are subscribed. 
+
 ### Playing sounds using FMOD Core / Low Level API
 
-You can load and play any sound file in your project directory by using the FMOD Low Level API bindings. Similar to Studio events these instances have to be released manually. Refer to FMOD's documentation pages for a list of compatible sound formats.
+You can load and play any sound file in your project directory by using the FMOD Low Level API bindings. Similar to Studio events these instances have to be released manually. Refer to FMOD's documentation pages for a list of compatible sound formats. If you're using FMOD Studio it's unlikely you'll have to use this API though.
 
 ```gdscript
 # create a sound
