@@ -6,6 +6,14 @@ var FMOD # FMOD singleton
 
 func _ready():
 	FMOD = Fmod.new()
+	FMOD.connect("timeline_beat", self, "_on_beat")
+	FMOD.connect("timeline_marker", self, "_on_marker")
+	
+func _on_beat(params):	
+	print(params)
+
+func _on_marker(params):
+	print(params)
 	
 #warning-ignore:unused_argument
 func _process(delta):
@@ -32,6 +40,9 @@ func system_set_parameter(name, value):
 	
 func system_get_parameter(name):
 	return FMOD.system_get_parameter(name)
+	
+func system_set_sound_3d_settings(dopplerScale, distanceFactor, rollOffScale):
+    return FMOD.system_set_sound_3d_settings(dopplerScale, distanceFactor, rollOffScale)
 
 
 ##### helper functions #####
@@ -135,6 +146,8 @@ func event_set_reverb_level(uuid, reverb_level):
 func event_is_virtual(uuid):
 	return FMOD.event_is_virtual(uuid)
 	
+func event_set_callback(id, mask):
+	return FMOD.event_set_callback(id, mask)
 
 ##### bus functions #####
 func bus_get_mute(path_to_bus):
@@ -196,7 +209,4 @@ func sound_get_pitch(uuid):
 	
 func sound_set_pitch(uuid, pitch):
 	return FMOD.sound_set_pitch(uuid, pitch)
-
-func system_set_sound_3d_settings(dopplerScale, distanceFactor, rollOffScale):
-    return FMOD.system_set_sound_3d_settings(dopplerScale, distanceFactor, rollOffScale)
 	
