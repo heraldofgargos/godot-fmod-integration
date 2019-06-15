@@ -232,7 +232,7 @@ int Fmod::getBankVCACount(const String &pathToBank) {
 	return -1;
 }
 
-unsigned int Fmod::createEventInstance(const String &eventPath) {
+uint64_t Fmod::createEventInstance(const String &eventPath) {
 	if (!eventDescriptions.has(eventPath)) {
 		FMOD::Studio::EventDescription *desc = nullptr;
 		checkErrors(system->getEvent(eventPath.ascii().get_data(), &desc));
@@ -242,14 +242,14 @@ unsigned int Fmod::createEventInstance(const String &eventPath) {
 	FMOD::Studio::EventInstance *instance;
 	checkErrors(desc->value()->createInstance(&instance));
 	if (instance) {
-		unsigned int instanceId = instanceIdCount + 1;
+		uint64_t instanceId = (uint64_t)instance;
 		unmanagedEvents.insert(instanceId, instance);
 		return instanceId;
 	}
 	return 0;
 }
 
-float Fmod::getEventParameter(unsigned int instanceId, const String &parameterName) {
+float Fmod::getEventParameter(uint64_t instanceId, const String &parameterName) {
 	float p = -1;
 	if (!unmanagedEvents.has(instanceId)) return p;
 	auto i = unmanagedEvents.find(instanceId);
@@ -258,13 +258,13 @@ float Fmod::getEventParameter(unsigned int instanceId, const String &parameterNa
 	return p;
 }
 
-void Fmod::setEventParameter(unsigned int instanceId, const String &parameterName, float value) {
+void Fmod::setEventParameter(uint64_t instanceId, const String &parameterName, float value) {
 	if (!unmanagedEvents.has(instanceId)) return;
 	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) checkErrors(i->value()->setParameterByName(parameterName.ascii().get_data(), value));
 }
 
-void Fmod::releaseEvent(unsigned int instanceId) {
+void Fmod::releaseEvent(uint64_t instanceId) {
 	if (!unmanagedEvents.has(instanceId)) return;
 	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) {
@@ -273,13 +273,13 @@ void Fmod::releaseEvent(unsigned int instanceId) {
 	}
 }
 
-void Fmod::startEvent(unsigned int instanceId) {
+void Fmod::startEvent(uint64_t instanceId) {
 	if (!unmanagedEvents.has(instanceId)) return;
 	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) checkErrors(i->value()->start());
 }
 
-void Fmod::stopEvent(unsigned int instanceId, int stopMode) {
+void Fmod::stopEvent(uint64_t instanceId, int stopMode) {
 	if (!unmanagedEvents.has(instanceId)) return;
 	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) {
@@ -288,13 +288,13 @@ void Fmod::stopEvent(unsigned int instanceId, int stopMode) {
 	}
 }
 
-void Fmod::triggerEventCue(unsigned int instanceId) {
+void Fmod::triggerEventCue(uint64_t instanceId) {
 	if (!unmanagedEvents.has(instanceId)) return;
 	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) checkErrors(i->value()->triggerCue());
 }
 
-int Fmod::getEventPlaybackState(unsigned int instanceId) {
+int Fmod::getEventPlaybackState(uint64_t instanceId) {
 	if (!unmanagedEvents.has(instanceId))
 		return -1;
 	else {
@@ -308,7 +308,7 @@ int Fmod::getEventPlaybackState(unsigned int instanceId) {
 	}
 }
 
-bool Fmod::getEventPaused(unsigned int instanceId) {
+bool Fmod::getEventPaused(uint64_t instanceId) {
 	if (!unmanagedEvents.has(instanceId)) return false;
 	auto i = unmanagedEvents.find(instanceId);
 	bool paused = false;
@@ -316,13 +316,13 @@ bool Fmod::getEventPaused(unsigned int instanceId) {
 	return paused;
 }
 
-void Fmod::setEventPaused(unsigned int instanceId, bool paused) {
+void Fmod::setEventPaused(uint64_t instanceId, bool paused) {
 	if (!unmanagedEvents.has(instanceId)) return;
 	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) checkErrors(i->value()->setPaused(paused));
 }
 
-float Fmod::getEventPitch(unsigned int instanceId) {
+float Fmod::getEventPitch(uint64_t instanceId) {
 	if (!unmanagedEvents.has(instanceId)) return 0.0f;
 	auto i = unmanagedEvents.find(instanceId);
 	float pitch = 0.0f;
@@ -330,13 +330,13 @@ float Fmod::getEventPitch(unsigned int instanceId) {
 	return pitch;
 }
 
-void Fmod::setEventPitch(unsigned int instanceId, float pitch) {
+void Fmod::setEventPitch(uint64_t instanceId, float pitch) {
 	if (!unmanagedEvents.has(instanceId)) return;
 	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) checkErrors(i->value()->setPitch(pitch));
 }
 
-float Fmod::getEventVolume(unsigned int instanceId) {
+float Fmod::getEventVolume(uint64_t instanceId) {
 	if (!unmanagedEvents.has(instanceId)) return 0.0f;
 	auto i = unmanagedEvents.find(instanceId);
 	float volume = 0.0f;
@@ -344,13 +344,13 @@ float Fmod::getEventVolume(unsigned int instanceId) {
 	return volume;
 }
 
-void Fmod::setEventVolume(unsigned int instanceId, float volume) {
+void Fmod::setEventVolume(uint64_t instanceId, float volume) {
 	if (!unmanagedEvents.has(instanceId)) return;
 	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) checkErrors(i->value()->setVolume(volume));
 }
 
-int Fmod::getEventTimelinePosition(unsigned int instanceId) {
+int Fmod::getEventTimelinePosition(uint64_t instanceId) {
 	if (!unmanagedEvents.has(instanceId)) return 0;
 	auto i = unmanagedEvents.find(instanceId);
 	int tp = 0;
@@ -358,13 +358,13 @@ int Fmod::getEventTimelinePosition(unsigned int instanceId) {
 	return tp;
 }
 
-void Fmod::setEventTimelinePosition(unsigned int instanceId, int position) {
+void Fmod::setEventTimelinePosition(uint64_t instanceId, int position) {
 	if (!unmanagedEvents.has(instanceId)) return;
 	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) checkErrors(i->value()->setTimelinePosition(position));
 }
 
-float Fmod::getEventReverbLevel(unsigned int instanceId, int index) {
+float Fmod::getEventReverbLevel(uint64_t instanceId, int index) {
 	if (!unmanagedEvents.has(instanceId)) return 0.0f;
 	auto i = unmanagedEvents.find(instanceId);
 	float rvl = 0.0f;
@@ -372,13 +372,13 @@ float Fmod::getEventReverbLevel(unsigned int instanceId, int index) {
 	return rvl;
 }
 
-void Fmod::setEventReverbLevel(unsigned int instanceId, int index, float level) {
+void Fmod::setEventReverbLevel(uint64_t instanceId, int index, float level) {
 	if (!unmanagedEvents.has(instanceId)) return;
 	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) checkErrors(i->value()->setReverbLevel(index, level));
 }
 
-bool Fmod::isEventVirtual(unsigned int instanceId) {
+bool Fmod::isEventVirtual(uint64_t instanceId) {
 	if (!unmanagedEvents.has(instanceId)) return false;
 	auto i = unmanagedEvents.find(instanceId);
 	bool v = false;
@@ -577,7 +577,7 @@ void Fmod::playOneShotAttachedWithParams(const String &eventName, Object *gameOb
 	}
 }
 
-void Fmod::attachInstanceToNode(unsigned int instanceId, Object *gameObj) {
+void Fmod::attachInstanceToNode(uint64_t instanceId, Object *gameObj) {
 	if (!unmanagedEvents.has(instanceId) || isNull(gameObj)) return;
 	auto i = unmanagedEvents.find(instanceId);
 	if (i->value()) {
@@ -586,7 +586,7 @@ void Fmod::attachInstanceToNode(unsigned int instanceId, Object *gameObj) {
 	}
 }
 
-void Fmod::detachInstanceFromNode(unsigned int instanceId) {
+void Fmod::detachInstanceFromNode(uint64_t instanceId) {
 	if (!unmanagedEvents.has(instanceId)) return;
 	auto instance = unmanagedEvents.find(instanceId);
 	if (instance->value()) {
@@ -616,7 +616,7 @@ void Fmod::setVCAVolume(const String &VCAPath, float volume) {
 	checkErrors(vca->value()->setVolume(volume));
 }
 
-void Fmod::playSound(unsigned int instanceId) {
+void Fmod::playSound(uint64_t instanceId) {
 	if (sounds.has(instanceId)) {
 		auto s = sounds.find(instanceId)->value();
 		auto c = channels.find(s)->value();
@@ -624,7 +624,7 @@ void Fmod::playSound(unsigned int instanceId) {
 	}
 }
 
-void Fmod::setSoundPaused(unsigned int instanceId, bool paused) {
+void Fmod::setSoundPaused(uint64_t instanceId, bool paused) {
 	if (sounds.has(instanceId)) {
 		auto s = sounds.find(instanceId)->value();
 		auto c = channels.find(s)->value();
@@ -632,7 +632,7 @@ void Fmod::setSoundPaused(unsigned int instanceId, bool paused) {
 	}
 }
 
-void Fmod::stopSound(unsigned int instanceId) {
+void Fmod::stopSound(uint64_t instanceId) {
 	if (sounds.has(instanceId)) {
 		auto s = sounds.find(instanceId)->value();
 		auto c = channels.find(s)->value();
@@ -640,7 +640,7 @@ void Fmod::stopSound(unsigned int instanceId) {
 	}
 }
 
-bool Fmod::isSoundPlaying(unsigned int instanceId) {
+bool Fmod::isSoundPlaying(uint64_t instanceId) {
 	if (sounds.has(instanceId)) {
 		auto s = sounds.find(instanceId)->value();
 		auto c = channels.find(s)->value();
@@ -651,7 +651,7 @@ bool Fmod::isSoundPlaying(unsigned int instanceId) {
 	return false;
 }
 
-void Fmod::setSoundVolume(unsigned int instanceId, float volume) {
+void Fmod::setSoundVolume(uint64_t instanceId, float volume) {
 	if (sounds.has(instanceId)) {
 		auto s = sounds.find(instanceId)->value();
 		auto c = channels.find(s)->value();
@@ -659,7 +659,7 @@ void Fmod::setSoundVolume(unsigned int instanceId, float volume) {
 	}
 }
 
-float Fmod::getSoundVolume(unsigned int instanceId) {
+float Fmod::getSoundVolume(uint64_t instanceId) {
 	if (sounds.has(instanceId)) {
 		auto s = sounds.find(instanceId)->value();
 		auto c = channels.find(s)->value();
@@ -670,7 +670,7 @@ float Fmod::getSoundVolume(unsigned int instanceId) {
 	return 0.f;
 }
 
-float Fmod::getSoundPitch(unsigned int instanceId) {
+float Fmod::getSoundPitch(uint64_t instanceId) {
 	if (sounds.has(instanceId)) {
 		auto s = sounds.find(instanceId)->value();
 		auto c = channels.find(s)->value();
@@ -681,7 +681,7 @@ float Fmod::getSoundPitch(unsigned int instanceId) {
 	return 0.f;
 }
 
-void Fmod::setSoundPitch(unsigned int instanceId, float pitch) {
+void Fmod::setSoundPitch(uint64_t instanceId, float pitch) {
 	if (sounds.has(instanceId)) {
 		auto s = sounds.find(instanceId)->value();
 		auto c = channels.find(s)->value();
@@ -689,11 +689,11 @@ void Fmod::setSoundPitch(unsigned int instanceId, float pitch) {
 	}
 }
 
-unsigned int Fmod::loadSound(const String &path, int mode) {
+uint64_t Fmod::loadSound(const String &path, int mode) {
 	FMOD::Sound *sound = nullptr;
 	checkErrors(coreSystem->createSound(path.ascii().get_data(), mode, nullptr, &sound));
 	if (sound) {
-		unsigned int instanceId = instanceIdCount + 1;
+		uint64_t instanceId = (uint64_t)sound;
 		sounds.insert(instanceId, sound);
 		FMOD::Channel *channel = nullptr;
 		checkErrors(coreSystem->playSound(sound, nullptr, true, &channel));
@@ -705,7 +705,7 @@ unsigned int Fmod::loadSound(const String &path, int mode) {
 	return 0;
 }
 
-void Fmod::releaseSound(unsigned int instanceId) {
+void Fmod::releaseSound(uint64_t instanceId) {
 	if (!sounds.has(instanceId)) return; // sound is not loaded
 	auto sound = sounds.find(instanceId);
 	if (sound->value()) {
