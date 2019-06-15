@@ -769,12 +769,14 @@ FMOD_RESULT F_CALLBACK eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_
 // runs on the game thread
 void Fmod::runCallbacks() {
 	m->lock();
-	if (beatCallbackInfo["position"] != cachedBeatCallbackInfo["position"] || beatCallbackInfo["event_id"] != cachedBeatCallbackInfo["event_id"]) {
+	if (beatCallbackInfo["position"] != cachedBeatCallbackInfo["position"] 
+		|| beatCallbackInfo["event_id"] != cachedBeatCallbackInfo["event_id"]) {
 		emit_signal("timeline_beat", beatCallbackInfo);
 		cachedBeatCallbackInfo["position"] = beatCallbackInfo["position"];
 		cachedBeatCallbackInfo["event_id"] = beatCallbackInfo["event_id"];
 	}
-	if (markerCallbackInfo["position"] != cachedMarkerCallbackInfo["position"] || markerCallbackInfo["event_id"] != cachedMarkerCallbackInfo["event_id"]) {
+	if (markerCallbackInfo["position"] != cachedMarkerCallbackInfo["position"] 
+		|| markerCallbackInfo["event_id"] != cachedMarkerCallbackInfo["event_id"]) {
 		emit_signal("timeline_marker", markerCallbackInfo);
 		cachedMarkerCallbackInfo["position"] = markerCallbackInfo["position"];
 		cachedMarkerCallbackInfo["event_id"] = markerCallbackInfo["event_id"];
