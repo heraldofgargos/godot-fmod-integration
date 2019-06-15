@@ -74,9 +74,6 @@ class Fmod : public Object {
 	// events not directly managed by the integration
 	Map<uint64_t, FMOD::Studio::EventInstance *> unmanagedEvents;
 
-	Dictionary cachedMarkerCallbackInfo;
-	Dictionary cachedBeatCallbackInfo;
-
 	FMOD_3D_ATTRIBUTES get3DAttributes(FMOD_VECTOR pos, FMOD_VECTOR up, FMOD_VECTOR forward, FMOD_VECTOR vel);
 	FMOD_VECTOR toFmodVector(Vector3 vec);
 	void setListenerAttributes();
@@ -85,8 +82,6 @@ class Fmod : public Object {
 	bool isNull(Object *o);
 	void loadBus(const String &busPath);
 	void loadVCA(const String &VCAPath);
-
-	void runCallbacks();
 
 protected:
 	static void _bind_methods();
@@ -139,7 +134,6 @@ public:
 	float getEventReverbLevel(uint64_t instanceId, int index);
 	void setEventReverbLevel(uint64_t instanceId, int index, float level);
 	bool isEventVirtual(uint64_t instanceId);
-	void setCallback(uint64_t instanceId, int callbackMask);
 
 	/* bus functions */
 	bool getBusMute(const String &busPath);
@@ -169,7 +163,5 @@ public:
 	Fmod();
 	~Fmod();
 };
-
-FMOD_RESULT F_CALLBACK eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_STUDIO_EVENTINSTANCE *event, void *parameters);
 
 #endif

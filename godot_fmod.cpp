@@ -77,10 +77,7 @@ void Fmod::update() {
 	// update listener position
 	setListenerAttributes();
 
-	// if events are subscribed to callbacks, update them
-	runCallbacks();
-
-	// finally, dispatch an update call to FMOD
+	// dispatch update to FMOD
 	checkErrors(system->update());
 }
 
@@ -720,7 +717,7 @@ void Fmod::releaseSound(uint64_t instanceId) {
 void Fmod::setSound3DSettings(float dopplerScale, float distanceFactor, float rollOffScale) {
 	if (distanceFactor > 0 && checkErrors(coreSystem->set3DSettings(dopplerScale, distanceFactor, rollOffScale))) {
 		distanceScale = distanceFactor;
-		print_line("FMOD Sound System: Successfully set global 3D settings");
+		print_line("Successfully set global 3D settings");
 	} else {
 		print_error("FMOD Sound System: Failed to set 3D settings :|");
 	}
@@ -793,7 +790,6 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("system_set_software_format", "sample_rate", "speaker_mode", "num_raw_speakers"), &Fmod::setSoftwareFormat);
 	ClassDB::bind_method(D_METHOD("system_set_parameter", "name", "value"), &Fmod::setGlobalParameter);
 	ClassDB::bind_method(D_METHOD("system_get_parameter", "name"), &Fmod::getGlobalParameter);
-	ClassDB::bind_method(D_METHOD("system_set_sound_3d_settings", "dopplerScale", "distanceFactor", "rollOffScale"), &Fmod::setSound3DSettings);
 
 	/* integration helper functions */
 	ClassDB::bind_method(D_METHOD("play_one_shot", "event_name", "node"), &Fmod::playOneShot);
@@ -832,7 +828,6 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("event_get_reverb_level", "id", "index"), &Fmod::getEventReverbLevel);
 	ClassDB::bind_method(D_METHOD("event_set_reverb_level", "id", "index", "level"), &Fmod::setEventReverbLevel);
 	ClassDB::bind_method(D_METHOD("event_is_virtual", "id"), &Fmod::isEventVirtual);
-	ClassDB::bind_method(D_METHOD("event_set_callback", "id", "callback_mask"), &Fmod::setCallback);
 
 	/* bus functions */
 	ClassDB::bind_method(D_METHOD("bus_get_mute", "path_to_bus"), &Fmod::getBusMute);
@@ -859,9 +854,7 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("sound_set_pitch", "id", "pitch"), &Fmod::setSoundPitch);
 	ClassDB::bind_method(D_METHOD("sound_get_pitch", "id"), &Fmod::getSoundPitch);
 
-	/* Event Callback Signals */
-	ADD_SIGNAL(MethodInfo("timeline_beat", PropertyInfo(Variant::DICTIONARY, "params")));
-	ADD_SIGNAL(MethodInfo("timeline_marker", PropertyInfo(Variant::DICTIONARY, "params")));
+	ClassDB::bind_method(D_METHOD("system_set_sound_3d_settings", "dopplerScale", "distanceFactor", "rollOffScale"), &Fmod::setSound3DSettings);
 
 	/* FMOD_INITFLAGS */
 	BIND_CONSTANT(FMOD_INIT_NORMAL);
@@ -906,10 +899,6 @@ void Fmod::_bind_methods() {
 	/* FMOD_STUDIO_STOP_MODE */
 	BIND_CONSTANT(FMOD_STUDIO_STOP_ALLOWFADEOUT);
 	BIND_CONSTANT(FMOD_STUDIO_STOP_IMMEDIATE);
-
-	/* FMOD_STUDIO_EVENT_CALLBACK_TYPE */
-	BIND_CONSTANT(FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_MARKER);
-	BIND_CONSTANT(FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_BEAT);
 
 	/* FMOD_SPEAKERMODE */
 	BIND_CONSTANT(FMOD_SPEAKERMODE_DEFAULT);
