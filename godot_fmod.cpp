@@ -733,6 +733,7 @@ void Fmod::setCallback(uint64_t instanceId, int callbackMask) {
 		checkErrors(i->value()->setCallback(eventCallback, callbackMask));
 }
 
+Mutex *m;
 Dictionary markerCallbackInfo;
 Dictionary beatCallbackInfo;
 
@@ -743,12 +744,15 @@ FMOD_RESULT F_CALLBACK eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_
 
 	if (type == FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_MARKER) {
 		FMOD_STUDIO_TIMELINE_MARKER_PROPERTIES *props = (FMOD_STUDIO_TIMELINE_MARKER_PROPERTIES *)parameters;
+		m->lock();
 		markerCallbackInfo["event_id"] = (uint64_t)instance;
 		markerCallbackInfo["name"] = props->name;
 		markerCallbackInfo["position"] = props->position;
+		m->unlock();
 
 	} else if (type == FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_BEAT) {
 		FMOD_STUDIO_TIMELINE_BEAT_PROPERTIES *props = (FMOD_STUDIO_TIMELINE_BEAT_PROPERTIES *)parameters;
+		m->lock();
 		beatCallbackInfo["event_id"] = (uint64_t)instance;
 		beatCallbackInfo["beat"] = props->beat;
 		beatCallbackInfo["bar"] = props->bar;
@@ -756,24 +760,26 @@ FMOD_RESULT F_CALLBACK eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_
 		beatCallbackInfo["time_signature_upper"] = props->timesignatureupper;
 		beatCallbackInfo["time_signature_lower"] = props->timesignaturelower;
 		beatCallbackInfo["position"] = props->position;
+		m->unlock();
 	}
 
 	return FMOD_OK;
 }
 
+// runs on the game thread
 void Fmod::runCallbacks() {
-	if (beatCallbackInfo["position"] != cachedBeatCallbackInfo["position"]
-		|| beatCallbackInfo["event_id"] != cachedBeatCallbackInfo["event_id"]) {
+	m->lock();
+	if (beatCallbackInfo["position"] != cachedBeatCallbackInfo["position"] || beatCallbackInfo["event_id"] != cachedBeatCallbackInfo["event_id"]) {
 		emit_signal("timeline_beat", beatCallbackInfo);
 		cachedBeatCallbackInfo["position"] = beatCallbackInfo["position"];
 		cachedBeatCallbackInfo["event_id"] = beatCallbackInfo["event_id"];
 	}
-	if (markerCallbackInfo["position"] != cachedMarkerCallbackInfo["position"] 
-		|| markerCallbackInfo["event_id"] != cachedMarkerCallbackInfo["event_id"]) {
+	if (markerCallbackInfo["position"] != cachedMarkerCallbackInfo["position"] || markerCallbackInfo["event_id"] != cachedMarkerCallbackInfo["event_id"]) {
 		emit_signal("timeline_marker", markerCallbackInfo);
 		cachedMarkerCallbackInfo["position"] = markerCallbackInfo["position"];
 		cachedMarkerCallbackInfo["event_id"] = markerCallbackInfo["event_id"];
 	}
+	m->unlock();
 }
 
 void Fmod::_bind_methods() {
@@ -951,8 +957,10 @@ Fmod::Fmod() {
 	system = nullptr, coreSystem = nullptr, listener = nullptr;
 	checkErrors(FMOD::Studio::System::create(&system));
 	checkErrors(system->getCoreSystem(&coreSystem));
+	m = Mutex::create();
 }
 
 Fmod::~Fmod() {
 	Fmod::shutdown();
+	m->~Mutex();
 }
