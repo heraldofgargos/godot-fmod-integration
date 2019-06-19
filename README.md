@@ -89,7 +89,7 @@ FMOD.event_release(my_music_event)
 
 ### Using the integration helpers
 
-These are helper functions provided by the integration for attaching event instances to Godot Nodes for 3D/positional audio. The listener position and 3D attributes of any attached instances are automatically updated every time you call `system_update()`. Instances are also automatically cleaned up once finished so you don't have to manually call `event_release()`.
+These are helper functions provided by the integration for playing events and attaching event instances to Godot Nodes for 3D/positional audio. The listener position and 3D attributes of any attached instances are automatically updated every time you call `system_update()`. Instances are also automatically cleaned up once finished so you don't have to manually call `event_release()`.
 
 ```gdscript
 # play an event at this Node's position
@@ -138,7 +138,7 @@ var my_music_event = FMOD.event_create_instance("event:/schmid - 140 Part 2B")
 # request callbacks from this instance
 # in this case request both Marker and Beat callbacks
 FMOD.event_set_callback(my_music_event,
-Fmod.FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_MARKER | Fmod.FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_BEAT)
+	Fmod.FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_MARKER | Fmod.FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_BEAT)
 
 # hook up our signals
 FMOD.connect("timeline_beat", self, "_on_beat")
@@ -152,7 +152,7 @@ func _on_beat(params):
 func _on_marker(params):
 	print(params)
 ```
-`params` is a dictionary which contains parameters passed in by FMOD. These vary from each callback. For beat callbacks it will contain fields such as the current beat, current bar, time signature etc. For marker callbacks it will contain the marker name etc. The event_id of the instance that triggered the callback will also be passed in. You can use this to filter out individual callbacks if multiple events are subscribed. 
+In the above example, `params` is a dictionary which contains parameters passed in by FMOD. These vary from each callback. For beat callbacks it will contain fields such as the current beat, current bar, time signature etc. For marker callbacks it will contain the marker name etc. The event_id of the instance that triggered the callback will also be passed in. You can use this to filter out individual callbacks if multiple events are subscribed. 
 
 ### Playing sounds using FMOD Core / Low Level API
 
