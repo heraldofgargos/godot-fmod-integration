@@ -47,9 +47,8 @@ func _ready():
 	FMOD.system_add_listener($Listener)
 
 	# play some events
-	# technically these are not one-shots but this is just for demo's sake
-	FMOD.play_one_shot("event:/Car engine", $SoundSource1)
-	FMOD.play_one_shot("event:/Waterfall", $SoundSource2)
+	FMOD.play_one_shot("event:/Footstep", $SoundSource1)
+	FMOD.play_one_shot("event:/Gunshot", $SoundSource2)
 
 func _process(delta):
 	# update FMOD every tick
