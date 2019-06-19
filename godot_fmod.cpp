@@ -181,7 +181,10 @@ String Fmod::loadbank(const String &pathToBank, int flags) {
 void Fmod::unloadBank(const String &pathToBank) {
 	if (!banks.has(pathToBank)) return; // bank is not loaded
 	auto bank = banks.find(pathToBank);
-	if (bank->value()) checkErrors(bank->value()->unload());
+	if (bank->value()) {
+		checkErrors(bank->value()->unload());
+		banks.erase(pathToBank);
+	}
 }
 
 int Fmod::getBankLoadingState(const String &pathToBank) {
