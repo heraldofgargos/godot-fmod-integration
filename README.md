@@ -138,7 +138,7 @@ var my_music_event = FMOD.event_create_instance("event:/schmid - 140 Part 2B")
 # request callbacks from this instance
 # in this case request both Marker and Beat callbacks
 FMOD.event_set_callback(my_music_event,
-Fmod.FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_MARKER | Fmod.FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_BEAT)
+	Fmod.FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_MARKER | Fmod.FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_BEAT)
 
 # hook up our signals
 FMOD.connect("timeline_beat", self, "_on_beat")
@@ -152,7 +152,7 @@ func _on_beat(params):
 func _on_marker(params):
 	print(params)
 ```
-`params` is a dictionary which contains parameters passed in by FMOD. These vary from each callback. For beat callbacks it will contain fields such as the current beat, current bar, time signature etc. For marker callbacks it will contain the marker name etc. The event_id of the instance that triggered the callback will also be passed in. You can use this to filter out individual callbacks if multiple events are subscribed. 
+In the above example, `params` is a dictionary which contains parameters passed in by FMOD. These vary from each callback. For beat callbacks it will contain fields such as the current beat, current bar, time signature etc. For marker callbacks it will contain the marker name etc. The event_id of the instance that triggered the callback will also be passed in. You can use this to filter out individual callbacks if multiple events are subscribed. 
 
 ### Playing sounds using FMOD Core / Low Level API
 
