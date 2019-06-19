@@ -116,7 +116,8 @@ FMOD.attach_instance_to_node(event_instance, self)
 # detaches the instance from its Node
 FMOD.detach_instance_from_node(event_instance)
 
-# self explanatory
+# quick helpers for pausing and muting 
+# affects all events including manually called instances
 FMOD.pause_all_events()
 FMOD.unpause_all_events()
 FMOD.mute_all_events()
