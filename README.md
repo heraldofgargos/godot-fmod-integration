@@ -116,6 +116,15 @@ FMOD.attach_instance_to_node(event_instance, self)
 
 # detaches the instance from its Node
 FMOD.detach_instance_from_node(event_instance)
+
+# self explanatory
+FMOD.pause_all_events()
+FMOD.unpause_all_events()
+FMOD.mute_all_events()
+FMOD.unmute_all_events()
+
+# returns True if a bank is currently loading
+FMOD.banks_still_loading()
 ```
 
 ### Timeline marker & music beat callbacks
@@ -147,7 +156,7 @@ func _on_marker(params):
 
 ### Playing sounds using FMOD Core / Low Level API
 
-You can load and play any sound file in your project directory by using the FMOD Low Level API bindings. Similar to Studio events these instances have to be released manually. Refer to FMOD's documentation pages for a list of compatible sound formats. If you're using FMOD Studio it's unlikely you'll have to use this API though.
+You can load and play any sound file in your project directory using the FMOD Low Level API bindings. Similar to Studio events these instances have to be released manually. Refer to FMOD's documentation pages for a list of compatible sound formats. If you're using FMOD Studio it's unlikely you'll have to use this API though.
 
 ```gdscript
 # create a sound
@@ -216,4 +225,4 @@ For `onDestroy` method, you should close Java part of FMOD.
 
 ## Contributing
 
-This project is still a work in progress and is probably not yet ready for use in full-blown production. If you run into issues (crashes, memory leaks, broken 3D sound etc.) let us know about it through the issue tracker. If you are a programmer, sound designer or a composer and wish to contribute to the project, the contribution guidelines are available [here](https://github.com/alexfonseka/godot-fmod-integration/blob/master/.github/contributing.md). Thank you for being interested in this project! ✌
+This project is still a work in progress and is probably not yet ready for use in full-blown production. If you run into issues (crashes, memory leaks, broken 3D sound etc.) let us know through the [issue tracker](https://github.com/alexfonseka/godot-fmod-integration/issues). If you are a programmer, sound designer or a composer and wish to contribute, the contribution guidelines are available [here](https://github.com/alexfonseka/godot-fmod-integration/blob/master/.github/contributing.md). Thank you for being interested in this project! ✌
