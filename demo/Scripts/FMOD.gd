@@ -64,6 +64,21 @@ func attach_instance_to_node(uuid, node):
 func detach_instance_from_node(uuid):
 	return FMOD.detach_instance_from_node(uuid)
 	
+func pause_all_events():
+	return FMOD.pause_all_events()
+	
+func unpause_all_events():
+	return FMOD.unpause_all_events()
+	
+func mute_all_events():
+	return FMOD.mute_all_events()
+	
+func unmute_all_events():
+	return FMOD.unmute_all_events()
+	
+func banks_still_loading():
+	return FMOD.banks_still_loading()
+	
 	
 ##### bank functions #####
 func bank_load(path_to_bank, flags):

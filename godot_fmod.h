@@ -102,13 +102,18 @@ public:
 	void setGlobalParameter(const String &parameterName, float value);
 	float getGlobalParameter(const String &parameterName);
 
-	/* helper functions for playing sounds in 3D */
+	/* helper functions */
 	void playOneShot(const String &eventName, Object *gameObj);
 	void playOneShotWithParams(const String &eventName, Object *gameObj, const Dictionary &parameters);
 	void playOneShotAttached(const String &eventName, Object *gameObj);
 	void playOneShotAttachedWithParams(const String &eventName, Object *gameObj, const Dictionary &parameters);
 	void attachInstanceToNode(uint64_t instanceId, Object *gameObj);
 	void detachInstanceFromNode(uint64_t instanceId);
+	void pauseAllEvents();
+	void unpauseAllEvents();
+	void muteAllEvents();
+	void unmuteAllEvents();
+	bool banksStillLoading();
 
 	/* bank functions */
 	String loadbank(const String &pathToBank, int flags);

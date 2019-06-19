@@ -603,6 +603,86 @@ void Fmod::detachInstanceFromNode(uint64_t instanceId) {
 	}
 }
 
+void Fmod::pauseAllEvents() {
+	// pause one shot instances
+	for (int i = 0; i < oneShotInstances.size(); i++) {
+		auto instance = oneShotInstances.get(i);
+		checkErrors(instance->setPaused(true));
+	}
+	// pause attached one shot instances
+	for (int i = 0; i < attachedOneShots.size(); i++) {
+		auto aShot = attachedOneShots.get(i);
+		checkErrors(aShot.instance->setPaused(true));
+	}	
+	// pause unmanaged events
+	for (auto e = unmanagedEvents.front(); e; e = e->next()) {
+		checkErrors(e->get()->setPaused(true));		
+	}
+}
+
+void Fmod::unpauseAllEvents() {
+	// unpause one shot instances
+	for (int i = 0; i < oneShotInstances.size(); i++) {
+		auto instance = oneShotInstances.get(i);
+		checkErrors(instance->setPaused(false));
+	}
+	// unpause attached one shot instances
+	for (int i = 0; i < attachedOneShots.size(); i++) {
+		auto aShot = attachedOneShots.get(i);
+		checkErrors(aShot.instance->setPaused(false));
+	}
+	// unpause unmanaged events
+	for (auto e = unmanagedEvents.front(); e; e = e->next()) {
+		checkErrors(e->get()->setPaused(false));
+	}
+}
+
+void Fmod::muteAllEvents() {
+	// mute one shot instances
+	for (int i = 0; i < oneShotInstances.size(); i++) {
+		auto instance = oneShotInstances.get(i);
+		checkErrors(instance->setVolume(0.f));
+	}
+	// mute attached one shot instances
+	for (int i = 0; i < attachedOneShots.size(); i++) {
+		auto aShot = attachedOneShots.get(i);
+		checkErrors(aShot.instance->setVolume(0.f));
+	}
+	// mute unmanaged events
+	for (auto e = unmanagedEvents.front(); e; e = e->next()) {
+		checkErrors(e->get()->setVolume(0.f));
+	}
+}
+
+void Fmod::unmuteAllEvents() {
+	// unmute one shot instances
+	for (int i = 0; i < oneShotInstances.size(); i++) {
+		auto instance = oneShotInstances.get(i);
+		checkErrors(instance->setVolume(1.f));
+	}
+	// unmute attached one shot instances
+	for (int i = 0; i < attachedOneShots.size(); i++) {
+		auto aShot = attachedOneShots.get(i);
+		checkErrors(aShot.instance->setVolume(1.f));
+	}
+	// unmute unmanaged events
+	for (auto e = unmanagedEvents.front(); e; e = e->next()) {
+		checkErrors(e->get()->setVolume(1.f));
+	}
+}
+
+bool Fmod::banksStillLoading() {
+	for (auto e = banks.front(); e; e = e->next()) {
+		auto bank = e->get();
+		FMOD_STUDIO_LOADING_STATE s;
+		checkErrors(bank->getLoadingState(&s));
+		if (s == FMOD_STUDIO_LOADING_STATE_LOADING) {
+			return true;
+		}
+	}
+	return false;
+}
+
 float Fmod::getVCAVolume(const String &VCAPath) {
 	loadVCA(VCAPath);
 	if (!VCAs.has(VCAPath)) return 0.0f;
@@ -769,14 +849,12 @@ FMOD_RESULT F_CALLBACK eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_
 // runs on the game thread
 void Fmod::runCallbacks() {
 	m->lock();
-	if (beatCallbackInfo["position"] != cachedBeatCallbackInfo["position"] 
-		|| beatCallbackInfo["event_id"] != cachedBeatCallbackInfo["event_id"]) {
+	if (beatCallbackInfo["position"] != cachedBeatCallbackInfo["position"] || beatCallbackInfo["event_id"] != cachedBeatCallbackInfo["event_id"]) {
 		emit_signal("timeline_beat", beatCallbackInfo);
 		cachedBeatCallbackInfo["position"] = beatCallbackInfo["position"];
 		cachedBeatCallbackInfo["event_id"] = beatCallbackInfo["event_id"];
 	}
-	if (markerCallbackInfo["position"] != cachedMarkerCallbackInfo["position"] 
-		|| markerCallbackInfo["event_id"] != cachedMarkerCallbackInfo["event_id"]) {
+	if (markerCallbackInfo["position"] != cachedMarkerCallbackInfo["position"] || markerCallbackInfo["event_id"] != cachedMarkerCallbackInfo["event_id"]) {
 		emit_signal("timeline_marker", markerCallbackInfo);
 		cachedMarkerCallbackInfo["position"] = markerCallbackInfo["position"];
 		cachedMarkerCallbackInfo["event_id"] = markerCallbackInfo["event_id"];
@@ -802,6 +880,11 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("play_one_shot_attached_with_params", "event_name", "node", "initial_parameters"), &Fmod::playOneShotAttachedWithParams);
 	ClassDB::bind_method(D_METHOD("attach_instance_to_node", "id", "node"), &Fmod::attachInstanceToNode);
 	ClassDB::bind_method(D_METHOD("detach_instance_from_node", "id"), &Fmod::detachInstanceFromNode);
+	ClassDB::bind_method(D_METHOD("pause_all_events"), &Fmod::pauseAllEvents);
+	ClassDB::bind_method(D_METHOD("unpause_all_events"), &Fmod::unpauseAllEvents);
+	ClassDB::bind_method(D_METHOD("mute_all_events"), &Fmod::muteAllEvents);
+	ClassDB::bind_method(D_METHOD("unmute_all_events"), &Fmod::unmuteAllEvents);
+	ClassDB::bind_method(D_METHOD("banks_still_loading"), &Fmod::banksStillLoading);
 
 	/* bank functions */
 	ClassDB::bind_method(D_METHOD("bank_load", "path_to_bank", "flags"), &Fmod::loadbank);
