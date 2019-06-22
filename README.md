@@ -191,6 +191,19 @@ FMOD.system_set_driver(id)
 var id = FMOD.system_get_driver()
 ```
 
+### Profiling & querying performance data
+
+`system_get_performance_data()` returns an object which contains current performance stats for CPU, Memory and File Streaming usage of both FMOD Studio and the Core System.
+
+```python
+# called every frame
+var perf_data = FMOD.system_get_performance_data()
+
+print(perf_data.CPU)
+print(perf_data.memory)
+print(perf_data.file)
+```
+
 ## For Android build targets
 
 Before building the engine, you should first create the environment variable to get the NDK path.
