@@ -179,7 +179,7 @@ By default, FMOD will use the primary audio output device as determined by the o
 Here, `system_get_available_drivers()` returns an Array which contains a Dictionary for every audio driver found. Each Dictionary contains fields such as the name, sample rate
 and speaker config of the respective driver. Most importantly, it contains the id for that driver.
 
-```python
+```gdscript
 # retrieve all available audio drivers
 var drivers = FMOD.system_get_available_drivers()
 
