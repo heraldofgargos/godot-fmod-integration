@@ -105,6 +105,7 @@ public:
 	Array getAvailableDrivers();
 	int getDriver();
 	void setDriver(int id);
+	Dictionary getPerformanceData();
 
 	/* helper functions */
 	void playOneShot(const String &eventName, Object *gameObj);

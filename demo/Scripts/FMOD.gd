@@ -52,6 +52,9 @@ func system_set_driver(id):
 	
 func system_get_driver():
 	return FMOD.system_get_driver()
+	
+func system_get_performance_data():
+	return FMOD.system_get_performance_data()
 
 
 ##### helper functions #####
