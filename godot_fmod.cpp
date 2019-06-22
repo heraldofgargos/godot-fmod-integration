@@ -167,6 +167,42 @@ float Fmod::getGlobalParameter(const String &parameterName) {
 	return value;
 }
 
+Array Fmod::getAvailableDrivers() {
+	Array driverList;
+	int numDrivers = 0;
+
+	checkErrors(coreSystem->getNumDrivers(&numDrivers));
+
+	for (int i = 0; i < numDrivers; i++) {
+		char name[256];
+		int sampleRate;
+		FMOD_SPEAKERMODE speakerMode;
+		int speakerModeChannels;
+		checkErrors(coreSystem->getDriverInfo(i, name, 256, nullptr, &sampleRate, &speakerMode, &speakerModeChannels));
+		String nameStr(name);
+
+		Dictionary driverInfo;
+		driverInfo["id"] = i;
+		driverInfo["name"] = nameStr;
+		driverInfo["sample_rate"] = sampleRate;
+		driverInfo["speaker_mode"] = (int)speakerMode;
+		driverInfo["number_of_channels"] = speakerModeChannels;
+		driverList.push_back(driverInfo);
+	}
+
+	return driverList;
+}
+
+int Fmod::getDriver() {
+	int driverId = 0;
+	checkErrors(coreSystem->getDriver(&driverId));
+	return driverId;
+}
+
+void Fmod::setDriver(int id) {
+	checkErrors(coreSystem->setDriver(id));
+}
+
 String Fmod::loadbank(const String &pathToBank, int flags) {
 	if (banks.has(pathToBank)) return pathToBank; // bank is already loaded
 	FMOD::Studio::Bank *bank = nullptr;
@@ -616,10 +652,10 @@ void Fmod::pauseAllEvents() {
 	for (int i = 0; i < attachedOneShots.size(); i++) {
 		auto aShot = attachedOneShots.get(i);
 		checkErrors(aShot.instance->setPaused(true));
-	}	
+	}
 	// pause unmanaged events
 	for (auto e = unmanagedEvents.front(); e; e = e->next()) {
-		checkErrors(e->get()->setPaused(true));		
+		checkErrors(e->get()->setPaused(true));
 	}
 }
 
@@ -875,6 +911,9 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("system_set_parameter", "name", "value"), &Fmod::setGlobalParameter);
 	ClassDB::bind_method(D_METHOD("system_get_parameter", "name"), &Fmod::getGlobalParameter);
 	ClassDB::bind_method(D_METHOD("system_set_sound_3d_settings", "dopplerScale", "distanceFactor", "rollOffScale"), &Fmod::setSound3DSettings);
+	ClassDB::bind_method(D_METHOD("system_get_available_drivers"), &Fmod::getAvailableDrivers);
+	ClassDB::bind_method(D_METHOD("system_get_driver"), &Fmod::getDriver);
+	ClassDB::bind_method(D_METHOD("system_set_driver", "id"), &Fmod::setDriver);
 
 	/* integration helper functions */
 	ClassDB::bind_method(D_METHOD("play_one_shot", "event_name", "node"), &Fmod::playOneShot);

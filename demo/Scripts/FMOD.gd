@@ -43,6 +43,15 @@ func system_get_parameter(name):
 	
 func system_set_sound_3d_settings(dopplerScale, distanceFactor, rollOffScale):
     return FMOD.system_set_sound_3d_settings(dopplerScale, distanceFactor, rollOffScale)
+	
+func system_get_available_drivers():
+	return FMOD.system_get_available_drivers()
+
+func system_set_driver(id):
+	return FMOD.system_set_driver(id)
+	
+func system_get_driver():
+	return FMOD.system_get_driver()
 
 
 ##### helper functions #####

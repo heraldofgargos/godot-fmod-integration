@@ -30,6 +30,7 @@
 #ifndef GODOT_FMOD_H
 #define GODOT_FMOD_H
 
+#include "core/array.h"
 #include "core/dictionary.h"
 #include "core/map.h"
 #include "core/node_path.h"
@@ -101,6 +102,9 @@ public:
 	void setSound3DSettings(float dopplerScale, float distanceFactor, float rollOffScale);
 	void setGlobalParameter(const String &parameterName, float value);
 	float getGlobalParameter(const String &parameterName);
+	Array getAvailableDrivers();
+	int getDriver();
+	void setDriver(int id);
 
 	/* helper functions */
 	void playOneShot(const String &eventName, Object *gameObj);
