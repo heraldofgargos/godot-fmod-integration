@@ -203,6 +203,43 @@ void Fmod::setDriver(int id) {
 	checkErrors(coreSystem->setDriver(id));
 }
 
+Dictionary Fmod::getPerformanceData() {
+	Dictionary performanceData;
+
+	// get the CPU usage
+	FMOD_STUDIO_CPU_USAGE cpuUsage;
+	checkErrors(system->getCPUUsage(&cpuUsage));
+	Dictionary cpuPerfData;
+	cpuPerfData["dsp"] = cpuUsage.dspusage;
+	cpuPerfData["geometry"] = cpuUsage.geometryusage;
+	cpuPerfData["stream"] = cpuUsage.streamusage;
+	cpuPerfData["studio"] = cpuUsage.studiousage;
+	cpuPerfData["update"] = cpuUsage.updateusage;
+	performanceData["CPU"] = cpuPerfData;
+
+	// get the memory usage
+	int currentAlloc = 0;
+	int maxAlloc = 0;
+	checkErrors(FMOD::Memory_GetStats(&currentAlloc, &maxAlloc));
+	Dictionary memPerfData;
+	memPerfData["currently_allocated"] = currentAlloc;
+	memPerfData["max_allocated"] = maxAlloc;
+	performanceData["memory"] = memPerfData;
+
+	// get the file usage
+	int64_t sampleBytesRead = 0;
+	int64_t streamBytesRead = 0;
+	int64_t otherBytesRead = 0;
+	checkErrors(coreSystem->getFileUsage(&sampleBytesRead, &streamBytesRead, &otherBytesRead));
+	Dictionary filePerfData;
+	filePerfData["sample_bytes_read"] = sampleBytesRead;
+	filePerfData["stream_bytes_read"] = streamBytesRead;
+	filePerfData["other_bytes_read"] = otherBytesRead;
+	performanceData["file"] = filePerfData;
+
+	return performanceData;
+}
+
 String Fmod::loadbank(const String &pathToBank, int flags) {
 	if (banks.has(pathToBank)) return pathToBank; // bank is already loaded
 	FMOD::Studio::Bank *bank = nullptr;
@@ -914,6 +951,7 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("system_get_available_drivers"), &Fmod::getAvailableDrivers);
 	ClassDB::bind_method(D_METHOD("system_get_driver"), &Fmod::getDriver);
 	ClassDB::bind_method(D_METHOD("system_set_driver", "id"), &Fmod::setDriver);
+	ClassDB::bind_method(D_METHOD("system_get_performance_data"), &Fmod::getPerformanceData);
 
 	/* integration helper functions */
 	ClassDB::bind_method(D_METHOD("play_one_shot", "event_name", "node"), &Fmod::playOneShot);
