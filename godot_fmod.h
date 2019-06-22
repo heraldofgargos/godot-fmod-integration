@@ -27,8 +27,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GODOT_FMOD_H
-#define GODOT_FMOD_H
+#pragma once
 
 #include "core/array.h"
 #include "core/dictionary.h"
@@ -74,9 +73,6 @@ class Fmod : public Object {
 
 	// events not directly managed by the integration
 	Map<uint64_t, FMOD::Studio::EventInstance *> unmanagedEvents;
-
-	Dictionary cachedMarkerCallbackInfo;
-	Dictionary cachedBeatCallbackInfo;
 
 	FMOD_3D_ATTRIBUTES get3DAttributes(FMOD_VECTOR pos, FMOD_VECTOR up, FMOD_VECTOR forward, FMOD_VECTOR vel);
 	FMOD_VECTOR toFmodVector(Vector3 vec);
@@ -179,7 +175,3 @@ public:
 	Fmod();
 	~Fmod();
 };
-
-FMOD_RESULT F_CALLBACK eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_STUDIO_EVENTINSTANCE *event, void *parameters);
-
-#endif

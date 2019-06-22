@@ -28,6 +28,7 @@
 /*************************************************************************/
 
 #include "godot_fmod.h"
+#include "callbacks.h"
 
 void Fmod::init(int numOfChannels, int studioFlags, int flags) {
 	// initialize FMOD Studio and FMOD Low Level System with provided flags
@@ -885,38 +886,39 @@ void Fmod::setSound3DSettings(float dopplerScale, float distanceFactor, float ro
 void Fmod::setCallback(uint64_t instanceId, int callbackMask) {
 	if (!unmanagedEvents.has(instanceId)) return;
 	auto i = unmanagedEvents.find(instanceId);
-	if (i->value())
-		checkErrors(i->value()->setCallback(eventCallback, callbackMask));
+	if (i->value() && checkErrors(i->value()->setCallback(Callbacks::eventCallback, callbackMask))) {
+		Callbacks::eventCallbacks.insert(instanceId, Callbacks::CallbackInfo());
+	}
 }
 
-Mutex *m;
-Dictionary markerCallbackInfo;
-Dictionary beatCallbackInfo;
-
-// this stuff runs on the Studio update thread, not the game thread
-FMOD_RESULT F_CALLBACK eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_STUDIO_EVENTINSTANCE *event, void *parameters) {
+// runs on the Studio update thread, not the game thread
+FMOD_RESULT F_CALLBACK Callbacks::eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_STUDIO_EVENTINSTANCE *event, void *parameters) {
 
 	FMOD::Studio::EventInstance *instance = (FMOD::Studio::EventInstance *)event;
+	auto instanceId = (uint64_t)instance;
+	auto callbackInfo = eventCallbacks.find(instanceId)->get();
 
 	if (type == FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_MARKER) {
 		FMOD_STUDIO_TIMELINE_MARKER_PROPERTIES *props = (FMOD_STUDIO_TIMELINE_MARKER_PROPERTIES *)parameters;
-		m->lock();
-		markerCallbackInfo["event_id"] = (uint64_t)instance;
-		markerCallbackInfo["name"] = props->name;
-		markerCallbackInfo["position"] = props->position;
-		m->unlock();
+		mut->lock();
+		callbackInfo.markerCallbackInfo["event_id"] = instanceId;
+		callbackInfo.markerCallbackInfo["name"] = props->name;
+		callbackInfo.markerCallbackInfo["position"] = props->position;
+		callbackInfo.markerCallbackInfo["emitted"] = true;
+		mut->unlock();
 
 	} else if (type == FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_BEAT) {
 		FMOD_STUDIO_TIMELINE_BEAT_PROPERTIES *props = (FMOD_STUDIO_TIMELINE_BEAT_PROPERTIES *)parameters;
-		m->lock();
-		beatCallbackInfo["event_id"] = (uint64_t)instance;
-		beatCallbackInfo["beat"] = props->beat;
-		beatCallbackInfo["bar"] = props->bar;
-		beatCallbackInfo["tempo"] = props->tempo;
-		beatCallbackInfo["time_signature_upper"] = props->timesignatureupper;
-		beatCallbackInfo["time_signature_lower"] = props->timesignaturelower;
-		beatCallbackInfo["position"] = props->position;
-		m->unlock();
+		mut->lock();
+		callbackInfo.beatCallbackInfo["event_id"] = instanceId;
+		callbackInfo.beatCallbackInfo["beat"] = props->beat;
+		callbackInfo.beatCallbackInfo["bar"] = props->bar;
+		callbackInfo.beatCallbackInfo["tempo"] = props->tempo;
+		callbackInfo.beatCallbackInfo["time_signature_upper"] = props->timesignatureupper;
+		callbackInfo.beatCallbackInfo["time_signature_lower"] = props->timesignaturelower;
+		callbackInfo.beatCallbackInfo["position"] = props->position;
+		callbackInfo.beatCallbackInfo["emitted"] = true;
+		mut->unlock();
 	}
 
 	return FMOD_OK;
@@ -924,18 +926,25 @@ FMOD_RESULT F_CALLBACK eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_
 
 // runs on the game thread
 void Fmod::runCallbacks() {
-	m->lock();
-	if (beatCallbackInfo["position"] != cachedBeatCallbackInfo["position"] || beatCallbackInfo["event_id"] != cachedBeatCallbackInfo["event_id"]) {
-		emit_signal("timeline_beat", beatCallbackInfo);
-		cachedBeatCallbackInfo["position"] = beatCallbackInfo["position"];
-		cachedBeatCallbackInfo["event_id"] = beatCallbackInfo["event_id"];
+	Callbacks::mut->lock();
+	for (auto e = Callbacks::eventCallbacks.front(); e; e = e->next()) {
+		auto cbInfo = e->get();
+
+		// check for Marker callbacks
+		if (cbInfo.markerCallbackInfo["emitted"]) {
+			cbInfo.markerCallbackInfo.erase("emitted");
+			emit_signal("timeline_marker", cbInfo.markerCallbackInfo);
+			cbInfo.markerCallbackInfo["emitted"] = false;
+		}
+
+		// check for Beat callbacks
+		if (cbInfo.beatCallbackInfo["emitted"]) {
+			cbInfo.beatCallbackInfo.erase("emitted");
+			emit_signal("timeline_beat", cbInfo.beatCallbackInfo);
+			cbInfo.beatCallbackInfo["emitted"] = false;
+		}
 	}
-	if (markerCallbackInfo["position"] != cachedMarkerCallbackInfo["position"] || markerCallbackInfo["event_id"] != cachedMarkerCallbackInfo["event_id"]) {
-		emit_signal("timeline_marker", markerCallbackInfo);
-		cachedMarkerCallbackInfo["position"] = markerCallbackInfo["position"];
-		cachedMarkerCallbackInfo["event_id"] = markerCallbackInfo["event_id"];
-	}
-	m->unlock();
+	Callbacks::mut->unlock();
 }
 
 void Fmod::_bind_methods() {
@@ -1119,13 +1128,15 @@ void Fmod::_bind_methods() {
 }
 
 Fmod::Fmod() {
-	system = nullptr, coreSystem = nullptr, listener = nullptr;
+	system = nullptr;
+	coreSystem = nullptr;
+	listener = nullptr;
+	Callbacks::mut = Mutex::create();
 	checkErrors(FMOD::Studio::System::create(&system));
 	checkErrors(system->getCoreSystem(&coreSystem));
-	m = Mutex::create();
 }
 
 Fmod::~Fmod() {
 	Fmod::shutdown();
-	m->~Mutex();
+	Callbacks::mut->~Mutex();
 }
