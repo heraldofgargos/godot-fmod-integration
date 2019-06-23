@@ -91,6 +91,9 @@ func unmute_all_events():
 func banks_still_loading():
 	return FMOD.banks_still_loading()
 	
+func wait_for_all_loads():
+	return FMOD.wait_for_all_loads()
+	
 	
 ##### bank functions #####
 func bank_load(path_to_bank, flags):

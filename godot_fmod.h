@@ -82,7 +82,6 @@ class Fmod : public Object {
 	bool isNull(Object *o);
 	void loadBus(const String &busPath);
 	void loadVCA(const String &VCAPath);
-
 	void runCallbacks();
 
 protected:
@@ -115,6 +114,7 @@ public:
 	void muteAllEvents();
 	void unmuteAllEvents();
 	bool banksStillLoading();
+	void waitForAllLoads();
 
 	/* bank functions */
 	String loadbank(const String &pathToBank, int flags);

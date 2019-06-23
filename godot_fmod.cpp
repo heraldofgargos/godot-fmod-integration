@@ -241,6 +241,10 @@ Dictionary Fmod::getPerformanceData() {
 	return performanceData;
 }
 
+void Fmod::waitForAllLoads() {
+	checkErrors(system->flushSampleLoading());
+}
+
 String Fmod::loadbank(const String &pathToBank, int flags) {
 	if (banks.has(pathToBank)) return pathToBank; // bank is already loaded
 	FMOD::Studio::Bank *bank = nullptr;
@@ -974,6 +978,7 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("mute_all_events"), &Fmod::muteAllEvents);
 	ClassDB::bind_method(D_METHOD("unmute_all_events"), &Fmod::unmuteAllEvents);
 	ClassDB::bind_method(D_METHOD("banks_still_loading"), &Fmod::banksStillLoading);
+	ClassDB::bind_method(D_METHOD("wait_for_all_loads"), &Fmod::waitForAllLoads);
 
 	/* bank functions */
 	ClassDB::bind_method(D_METHOD("bank_load", "path_to_bank", "flags"), &Fmod::loadbank);
