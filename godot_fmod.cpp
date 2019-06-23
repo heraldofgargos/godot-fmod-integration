@@ -685,70 +685,38 @@ void Fmod::detachInstanceFromNode(uint64_t instanceId) {
 }
 
 void Fmod::pauseAllEvents() {
-	// pause one shot instances
-	for (int i = 0; i < oneShotInstances.size(); i++) {
-		auto instance = oneShotInstances.get(i);
-		checkErrors(instance->setPaused(true));
-	}
-	// pause attached one shot instances
-	for (int i = 0; i < attachedOneShots.size(); i++) {
-		auto aShot = attachedOneShots.get(i);
-		checkErrors(aShot.instance->setPaused(true));
-	}
-	// pause unmanaged events
-	for (auto e = unmanagedEvents.front(); e; e = e->next()) {
-		checkErrors(e->get()->setPaused(true));
+	if (banks.size() > 1) {
+		FMOD::Studio::Bus *masterBus = nullptr;
+		if (checkErrors(system->getBus("bus:/", &masterBus))) {
+			masterBus->setPaused(true);
+		}
 	}
 }
 
 void Fmod::unpauseAllEvents() {
-	// unpause one shot instances
-	for (int i = 0; i < oneShotInstances.size(); i++) {
-		auto instance = oneShotInstances.get(i);
-		checkErrors(instance->setPaused(false));
-	}
-	// unpause attached one shot instances
-	for (int i = 0; i < attachedOneShots.size(); i++) {
-		auto aShot = attachedOneShots.get(i);
-		checkErrors(aShot.instance->setPaused(false));
-	}
-	// unpause unmanaged events
-	for (auto e = unmanagedEvents.front(); e; e = e->next()) {
-		checkErrors(e->get()->setPaused(false));
+	if (banks.size() > 1) {
+		FMOD::Studio::Bus *masterBus = nullptr;
+		if (checkErrors(system->getBus("bus:/", &masterBus))) {
+			masterBus->setPaused(false);
+		}
 	}
 }
 
 void Fmod::muteAllEvents() {
-	// mute one shot instances
-	for (int i = 0; i < oneShotInstances.size(); i++) {
-		auto instance = oneShotInstances.get(i);
-		checkErrors(instance->setVolume(0.f));
-	}
-	// mute attached one shot instances
-	for (int i = 0; i < attachedOneShots.size(); i++) {
-		auto aShot = attachedOneShots.get(i);
-		checkErrors(aShot.instance->setVolume(0.f));
-	}
-	// mute unmanaged events
-	for (auto e = unmanagedEvents.front(); e; e = e->next()) {
-		checkErrors(e->get()->setVolume(0.f));
+	if (banks.size() > 1) {
+		FMOD::Studio::Bus *masterBus = nullptr;
+		if (checkErrors(system->getBus("bus:/", &masterBus))) {
+			masterBus->setMute(true);
+		}
 	}
 }
 
 void Fmod::unmuteAllEvents() {
-	// unmute one shot instances
-	for (int i = 0; i < oneShotInstances.size(); i++) {
-		auto instance = oneShotInstances.get(i);
-		checkErrors(instance->setVolume(1.f));
-	}
-	// unmute attached one shot instances
-	for (int i = 0; i < attachedOneShots.size(); i++) {
-		auto aShot = attachedOneShots.get(i);
-		checkErrors(aShot.instance->setVolume(1.f));
-	}
-	// unmute unmanaged events
-	for (auto e = unmanagedEvents.front(); e; e = e->next()) {
-		checkErrors(e->get()->setVolume(1.f));
+	if (banks.size() > 1) {
+		FMOD::Studio::Bus *masterBus = nullptr;
+		if (checkErrors(system->getBus("bus:/", &masterBus))) {
+			masterBus->setMute(false);
+		}
 	}
 }
 
