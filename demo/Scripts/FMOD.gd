@@ -6,6 +6,14 @@ var FMOD # FMOD singleton
 
 func _ready():
 	FMOD = Fmod.new()
+	FMOD.connect("timeline_beat", self, "_on_beat")
+	FMOD.connect("timeline_marker", self, "_on_marker")
+	
+func _on_beat(params):	
+	print(params)
+
+func _on_marker(params):
+	print(params)
 	
 #warning-ignore:unused_argument
 func _process(delta):
@@ -32,6 +40,21 @@ func system_set_parameter(name, value):
 	
 func system_get_parameter(name):
 	return FMOD.system_get_parameter(name)
+	
+func system_set_sound_3d_settings(dopplerScale, distanceFactor, rollOffScale):
+    return FMOD.system_set_sound_3d_settings(dopplerScale, distanceFactor, rollOffScale)
+	
+func system_get_available_drivers():
+	return FMOD.system_get_available_drivers()
+
+func system_set_driver(id):
+	return FMOD.system_set_driver(id)
+	
+func system_get_driver():
+	return FMOD.system_get_driver()
+	
+func system_get_performance_data():
+	return FMOD.system_get_performance_data()
 
 
 ##### helper functions #####
@@ -52,6 +75,24 @@ func attach_instance_to_node(uuid, node):
 
 func detach_instance_from_node(uuid):
 	return FMOD.detach_instance_from_node(uuid)
+	
+func pause_all_events():
+	return FMOD.pause_all_events()
+	
+func unpause_all_events():
+	return FMOD.unpause_all_events()
+	
+func mute_all_events():
+	return FMOD.mute_all_events()
+	
+func unmute_all_events():
+	return FMOD.unmute_all_events()
+	
+func banks_still_loading():
+	return FMOD.banks_still_loading()
+	
+func wait_for_all_loads():
+	return FMOD.wait_for_all_loads()
 	
 	
 ##### bank functions #####
@@ -78,8 +119,8 @@ func bank_get_vca_count(path_to_bank):
 	
 
 ##### event functions #####
-func event_create_instance(uuid, event_path):
-	return FMOD.event_create_instance(uuid, event_path)
+func event_create_instance(event_path):
+	return FMOD.event_create_instance(event_path)
 	
 func event_get_parameter(uuid, parameter_name):
 	return FMOD.event_get_parameter(uuid, parameter_name)
@@ -135,6 +176,8 @@ func event_set_reverb_level(uuid, reverb_level):
 func event_is_virtual(uuid):
 	return FMOD.event_is_virtual(uuid)
 	
+func event_set_callback(id, mask):
+	return FMOD.event_set_callback(id, mask)
 
 ##### bus functions #####
 func bus_get_mute(path_to_bus):
@@ -167,8 +210,8 @@ func vca_set_volume(path_to_vca, volume):
 	return FMOD.vca_set_volume(path_to_vca, volume)
 	
 ##### Sound functions #####
-func sound_load(uuid, path_to_sound, mode):
-	return FMOD.sound_load(uuid, path_to_sound, mode)
+func sound_load(path_to_sound, mode):
+	return FMOD.sound_load(path_to_sound, mode)
 	
 func sound_play(uuid):
 	return FMOD.sound_play(uuid)
@@ -196,7 +239,4 @@ func sound_get_pitch(uuid):
 	
 func sound_set_pitch(uuid, pitch):
 	return FMOD.sound_set_pitch(uuid, pitch)
-
-func system_set_sound_3d_settings(dopplerScale, distanceFactor, rollOffScale):
-    return FMOD.system_set_sound_3d_settings(dopplerScale, distanceFactor, rollOffScale)
 	

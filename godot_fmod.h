@@ -27,9 +27,9 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef GODOT_FMOD_H
-#define GODOT_FMOD_H
+#pragma once
 
+#include "core/array.h"
 #include "core/dictionary.h"
 #include "core/map.h"
 #include "core/node_path.h"
@@ -50,17 +50,17 @@ class Fmod : public Object {
 	FMOD::Studio::System *system;
 	FMOD::System *coreSystem;
 
-	float distanceScale;
-
 	Object *listener;
 
 	bool nullListenerWarning = true;
+
+	float distanceScale = 1.0f;
 
 	Map<String, FMOD::Studio::Bank *> banks;
 	Map<String, FMOD::Studio::EventDescription *> eventDescriptions;
 	Map<String, FMOD::Studio::Bus *> buses;
 	Map<String, FMOD::Studio::VCA *> VCAs;
-	Map<String, FMOD::Sound *> sounds;
+	Map<uint64_t, FMOD::Sound *> sounds;
 	Map<FMOD::Sound *, FMOD::Channel *> channels;
 
 	// keep track of one shot instances internally
@@ -72,8 +72,7 @@ class Fmod : public Object {
 	Vector<AttachedOneShot> attachedOneShots;
 
 	// events not directly managed by the integration
-	// referenced through uuids generated in script
-	Map<String, FMOD::Studio::EventInstance *> unmanagedEvents;
+	Map<uint64_t, FMOD::Studio::EventInstance *> unmanagedEvents;
 
 	FMOD_3D_ATTRIBUTES get3DAttributes(FMOD_VECTOR pos, FMOD_VECTOR up, FMOD_VECTOR forward, FMOD_VECTOR vel);
 	FMOD_VECTOR toFmodVector(Vector3 vec);
@@ -83,6 +82,7 @@ class Fmod : public Object {
 	bool isNull(Object *o);
 	void loadBus(const String &busPath);
 	void loadVCA(const String &VCAPath);
+	void runCallbacks();
 
 protected:
 	static void _bind_methods();
@@ -94,16 +94,27 @@ public:
 	void shutdown();
 	void addListener(Object *gameObj);
 	void setSoftwareFormat(int sampleRate, int speakerMode, int numRawSpeakers);
+	void setSound3DSettings(float dopplerScale, float distanceFactor, float rollOffScale);
 	void setGlobalParameter(const String &parameterName, float value);
 	float getGlobalParameter(const String &parameterName);
+	Array getAvailableDrivers();
+	int getDriver();
+	void setDriver(int id);
+	Dictionary getPerformanceData();
 
-	/* helper functions for playing sounds in 3D */
+	/* helper functions */
 	void playOneShot(const String &eventName, Object *gameObj);
 	void playOneShotWithParams(const String &eventName, Object *gameObj, const Dictionary &parameters);
 	void playOneShotAttached(const String &eventName, Object *gameObj);
 	void playOneShotAttachedWithParams(const String &eventName, Object *gameObj, const Dictionary &parameters);
-	void attachInstanceToNode(const String &uuid, Object *gameObj);
-	void detachInstanceFromNode(const String &uuid);
+	void attachInstanceToNode(uint64_t instanceId, Object *gameObj);
+	void detachInstanceFromNode(uint64_t instanceId);
+	void pauseAllEvents();
+	void unpauseAllEvents();
+	void muteAllEvents();
+	void unmuteAllEvents();
+	bool banksStillLoading();
+	void waitForAllLoads();
 
 	/* bank functions */
 	String loadbank(const String &pathToBank, int flags);
@@ -115,25 +126,26 @@ public:
 	int getBankVCACount(const String &pathToBank);
 
 	/* event functions */
-	String createEventInstance(const String &uuid, const String &eventPath);
-	float getEventParameter(const String &uuid, const String &parameterName);
-	void setEventParameter(const String &uuid, const String &parameterName, float value);
-	void releaseEvent(const String &uuid);
-	void startEvent(const String &uuid);
-	void stopEvent(const String &uuid, int stopMode);
-	void triggerEventCue(const String &uuid);
-	int getEventPlaybackState(const String &uuid);
-	bool getEventPaused(const String &uuid);
-	void setEventPaused(const String &uuid, bool paused);
-	float getEventPitch(const String &uuid);
-	void setEventPitch(const String &uuid, float pitch);
-	float getEventVolume(const String &uuid);
-	void setEventVolume(const String &uuid, float volume);
-	int getEventTimelinePosition(const String &uuid);
-	void setEventTimelinePosition(const String &uuid, int position);
-	float getEventReverbLevel(const String &uuid, int index);
-	void setEventReverbLevel(const String &uuid, int index, float level);
-	bool isEventVirtual(const String &uuid);
+	uint64_t createEventInstance(const String &eventPath);
+	float getEventParameter(uint64_t instanceId, const String &parameterName);
+	void setEventParameter(uint64_t instanceId, const String &parameterName, float value);
+	void releaseEvent(uint64_t instanceId);
+	void startEvent(uint64_t instanceId);
+	void stopEvent(uint64_t instanceId, int stopMode);
+	void triggerEventCue(uint64_t instanceId);
+	int getEventPlaybackState(uint64_t instanceId);
+	bool getEventPaused(uint64_t instanceId);
+	void setEventPaused(uint64_t instanceId, bool paused);
+	float getEventPitch(uint64_t instanceId);
+	void setEventPitch(uint64_t instanceId, float pitch);
+	float getEventVolume(uint64_t instanceId);
+	void setEventVolume(uint64_t instanceId, float volume);
+	int getEventTimelinePosition(uint64_t instanceId);
+	void setEventTimelinePosition(uint64_t instanceId, int position);
+	float getEventReverbLevel(uint64_t instanceId, int index);
+	void setEventReverbLevel(uint64_t instanceId, int index, float level);
+	bool isEventVirtual(uint64_t instanceId);
+	void setCallback(uint64_t instanceId, int callbackMask);
 
 	/* bus functions */
 	bool getBusMute(const String &busPath);
@@ -149,21 +161,17 @@ public:
 	void setVCAVolume(const String &VCAPath, float volume);
 
 	/* Sound functions */
-	void playSound(const String &uuid);
-	String loadSound(const String &uuid, const String &path, int mode);
-	void releaseSound(const String &path);
-	void setSoundPaused(const String &uuid, bool paused);
-	void stopSound(const String &uuid);
-	bool isSoundPlaying(const String &uuid);
-	void setSoundVolume(const String &uuid, float volume);
-	float getSoundVolume(const String &uuid);
-	float getSoundPitch(const String &uuid);
-	void setSoundPitch(const String &uuid, float pitch);
-
-	void setSound3DSettings(float dopplerScale, float distanceFactor, float rollOffScale);
+	void playSound(uint64_t instanceId);
+	uint64_t loadSound(const String &path, int mode);
+	void releaseSound(uint64_t instanceId);
+	void setSoundPaused(uint64_t instanceId, bool paused);
+	void stopSound(uint64_t instanceId);
+	bool isSoundPlaying(uint64_t instanceId);
+	void setSoundVolume(uint64_t instanceId, float volume);
+	float getSoundVolume(uint64_t instanceId);
+	float getSoundPitch(uint64_t instanceId);
+	void setSoundPitch(uint64_t instanceId, float pitch);
 
 	Fmod();
 	~Fmod();
 };
-
-#endif

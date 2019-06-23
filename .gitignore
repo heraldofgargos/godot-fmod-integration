@@ -1,16 +1,17 @@
-*DS_Store
-
 # FMOD API
 api/fsbank
 api/core
 api/studio
 
-__pycache__
-*.obj
-*.pyc
-
 demo/.import/
 demo/test_sounds/
 
+__pycache__
+*.obj
+*.pyc
 *.d
 *.o
+
+.vscode
+
+*DS_Store
