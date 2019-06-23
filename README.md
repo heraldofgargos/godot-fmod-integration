@@ -125,6 +125,9 @@ FMOD.unmute_all_events()
 
 # returns True if a bank is currently loading
 FMOD.banks_still_loading()
+
+# blocks the calling thread until all sample loading is done
+FMOD.wait_for_all_loads()
 ```
 
 ### Timeline marker & music beat callbacks
