@@ -60,6 +60,8 @@ class Fmod : public Object {
 	Map<String, FMOD::Studio::EventDescription *> eventDescriptions;
 	Map<String, FMOD::Studio::Bus *> buses;
 	Map<String, FMOD::Studio::VCA *> VCAs;
+	Map<uint64_t, FMOD::Sound *> sounds;
+	Map<FMOD::Sound *, FMOD::Channel *> channels;
 
 	// keep track of one shot instances internally
 	Vector<FMOD::Studio::EventInstance *> oneShotInstances;
@@ -69,8 +71,8 @@ class Fmod : public Object {
 	};
 	Vector<AttachedOneShot> attachedOneShots;
 
-	Map<uint64_t, FMOD::Sound *> sounds;
-	Map<FMOD::Sound *, FMOD::Channel *> channels;
+	// events not directly managed by the integration
+	Map<uint64_t, FMOD::Studio::EventInstance *> unmanagedEvents;
 
 	FMOD_3D_ATTRIBUTES get3DAttributes(FMOD_VECTOR pos, FMOD_VECTOR up, FMOD_VECTOR forward, FMOD_VECTOR vel);
 	FMOD_VECTOR toFmodVector(Vector3 vec);
