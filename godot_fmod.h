@@ -45,6 +45,27 @@
 #include "api/studio/inc/fmod_studio.hpp"
 
 class Fmod : public Object {
+public:
+	struct CallbackInfo {
+		bool markerSignalEmitted = true;
+		bool beatSignalEmitted = true;
+		bool soundSignalEmitted = true;
+		Dictionary markerCallbackInfo;
+		Dictionary beatCallbackInfo;
+		Dictionary soundCallbackInfo;
+	};
+	struct EventInfo {
+		//old volume when muted
+		float oldVolume = 0.f;
+		bool isMuted = false;
+		//One shot events are managed by integration
+		bool isOneShot = false;
+		//GameObject to which this event is attached
+		Object *gameObj = nullptr;
+		//Store event callbacks informations
+		CallbackInfo callbackInfo = CallbackInfo();
+	};
+private:
 	GDCLASS(Fmod, Object);
 
 	FMOD::Studio::System *system;
@@ -64,15 +85,6 @@ class Fmod : public Object {
 	Map<FMOD::Sound *, FMOD::Channel *> channels;
 
 	Map<uint64_t, FMOD::Studio::EventInstance *> events;
-	struct EventInfo {
-            //old volume when muted
-            float oldVolume = 0.f;
-            bool isMuted = false;
-            //One shot events are managed by integration
-            bool isOneShot = false;
-            //GameObject to which this event is attached
-            Object *gameObj = nullptr;
-        };
 
 	FMOD_3D_ATTRIBUTES get3DAttributes(FMOD_VECTOR pos, FMOD_VECTOR up, FMOD_VECTOR forward, FMOD_VECTOR vel);
 	FMOD_VECTOR toFmodVector(Vector3 vec);
@@ -84,7 +96,7 @@ class Fmod : public Object {
 	void loadVCA(const String &VCAPath);
 	void runCallbacks();
 	FMOD::Studio::EventInstance *createInstance(String eventPath, bool isOneShot, bool isAttached, Object *gameObject);
-	Fmod::EventInfo *getEventInfo(FMOD::Studio::EventInstance * eventInstance);
+	EventInfo *getEventInfo(FMOD::Studio::EventInstance * eventInstance);
 	void releaseOneEvent(FMOD::Studio::EventInstance *eventInstance);
 	void muteOneEvent(FMOD::Studio::EventInstance *instance);
 	void unmuteOneEvent(FMOD::Studio::EventInstance *instance);
@@ -93,6 +105,7 @@ protected:
 	static void _bind_methods();
 
 public:
+
 	/* system functions */
 	void init(int numOfChannels, int studioFlags, int flags);
 	void update();
@@ -184,3 +197,7 @@ public:
 	Fmod();
 	~Fmod();
 };
+
+extern Mutex *mut;
+
+FMOD_RESULT F_CALLBACK eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_STUDIO_EVENTINSTANCE *event, void *parameters);

@@ -28,7 +28,8 @@
 /*************************************************************************/
 
 #include "godot_fmod.h"
-#include "callbacks.h"
+
+Mutex *mut;
 
 void Fmod::init(int numOfChannels, int studioFlags, int flags) {
 	// initialize FMOD Studio and FMOD Low Level System with provided flags
@@ -41,25 +42,24 @@ void Fmod::init(int numOfChannels, int studioFlags, int flags) {
 }
 
 void Fmod::update() {
-	for (FMOD::Studio::EventInstance *e : events.back) {
-        bool isReleased = false;
-        FMOD::Studio::EventInstance *eventInstance = e;
+	for (auto e = events.front(); e; e = e->next()) {
+		FMOD::Studio::EventInstance *eventInstance = e->get();
         EventInfo *eventInfo = getEventInfo(eventInstance);
         if (eventInfo->isOneShot) {
             FMOD_STUDIO_PLAYBACK_STATE s;
             checkErrors(eventInstance->getPlaybackState(&s));
             if (s == FMOD_STUDIO_PLAYBACK_STOPPED) {
                 releaseOneEvent(eventInstance);
-                isReleased = true;
+                continue;
             }
         }
-        if (!isReleased && eventInfo->gameObj && isNull(eventInfo->gameObj)) {
+        if (eventInfo->gameObj && isNull(eventInfo->gameObj)) {
             FMOD_STUDIO_STOP_MODE m = FMOD_STUDIO_STOP_IMMEDIATE;
             checkErrors(eventInstance->stop(m));
             releaseOneEvent(eventInstance);
-            isReleased = true;
+            continue;
         }
-        if (!isReleased) {
+        else {
             updateInstance3DAttributes(eventInstance, eventInfo->gameObj);
         }
     }
@@ -361,10 +361,13 @@ void Fmod::releaseEvent(uint64_t instanceId) {
 }
 
 void Fmod::releaseOneEvent(FMOD::Studio::EventInstance *eventInstance) {
+	mut->lock();
 	EventInfo *eventInfo = getEventInfo(eventInstance);
-    checkErrors(eventInstance->release());
+	eventInstance->setUserData(nullptr);
     events.erase((uint64_t) eventInstance);
+    checkErrors(eventInstance->release());
     delete &eventInfo;
+	mut->unlock();
 }
 
 void Fmod::startEvent(uint64_t instanceId) {
@@ -720,14 +723,16 @@ void Fmod::unmuteMasterBus() {
 }
 
 void Fmod::muteAllEvents() {
-    for (auto &it : events.back) {
-        muteOneEvent(it.second);
+    for (auto e = events.front(); e; e = e->next()) {
+		FMOD::Studio::EventInstance *eventInstance = e->get();
+        muteOneEvent(eventInstance);
     }
 }
 
 void Fmod::unmuteAllEvents() {
-    for (auto it : events.back) {
-        unmuteOneEvent(nullptr);
+    for (auto e = events.front(); e; e = e->next()) {
+		FMOD::Studio::EventInstance *eventInstance = e->get();
+        unmuteOneEvent(eventInstance);
     }
 }
 
@@ -911,89 +916,82 @@ void Fmod::setSound3DSettings(float dopplerScale, float distanceFactor, float ro
 
 void Fmod::setCallback(uint64_t instanceId, int callbackMask) {
 	if (!events.has(instanceId)) return;
-	auto i = events.find(instanceId);
-	if (i->value() && checkErrors(i->value()->setCallback(Callbacks::eventCallback, callbackMask))) {
-		Callbacks::eventCallbacks.insert(instanceId, Callbacks::CallbackInfo());
+	FMOD::Studio::EventInstance *event = events.find(instanceId)->value();
+	if (event) {
+		checkErrors(event->setCallback(eventCallback, callbackMask));
 	}
 }
 
 // runs on the Studio update thread, not the game thread
-FMOD_RESULT F_CALLBACK Callbacks::eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_STUDIO_EVENTINSTANCE *event, void *parameters) {
+FMOD_RESULT F_CALLBACK eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_STUDIO_EVENTINSTANCE *event, void *parameters) {
 
 	FMOD::Studio::EventInstance *instance = (FMOD::Studio::EventInstance *)event;
 	auto instanceId = (uint64_t)instance;
-	auto callbackInfo = eventCallbacks.find(instanceId)->get();
+	Fmod::EventInfo *eventInfo;
+	mut->lock();
+    instance->getUserData((void **)&eventInfo);
+	if (eventInfo) {
+		Fmod::CallbackInfo callbackInfo = eventInfo->callbackInfo;
 
-	if (type == FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_MARKER) {
-		FMOD_STUDIO_TIMELINE_MARKER_PROPERTIES *props = (FMOD_STUDIO_TIMELINE_MARKER_PROPERTIES *)parameters;
-		mut->lock();
-		callbackInfo.markerCallbackInfo["event_id"] = instanceId;
-		callbackInfo.markerCallbackInfo["name"] = props->name;
-		callbackInfo.markerCallbackInfo["position"] = props->position;
-		callbackInfo.markerCallbackInfo["emitted"] = true;
-		mut->unlock();
-
-	} else if (type == FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_BEAT) {
-		FMOD_STUDIO_TIMELINE_BEAT_PROPERTIES *props = (FMOD_STUDIO_TIMELINE_BEAT_PROPERTIES *)parameters;
-		mut->lock();
-		callbackInfo.beatCallbackInfo["event_id"] = instanceId;
-		callbackInfo.beatCallbackInfo["beat"] = props->beat;
-		callbackInfo.beatCallbackInfo["bar"] = props->bar;
-		callbackInfo.beatCallbackInfo["tempo"] = props->tempo;
-		callbackInfo.beatCallbackInfo["time_signature_upper"] = props->timesignatureupper;
-		callbackInfo.beatCallbackInfo["time_signature_lower"] = props->timesignaturelower;
-		callbackInfo.beatCallbackInfo["position"] = props->position;
-		callbackInfo.beatCallbackInfo["emitted"] = true;
-		mut->unlock();
+		if (type == FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_MARKER) {
+			FMOD_STUDIO_TIMELINE_MARKER_PROPERTIES *props = (FMOD_STUDIO_TIMELINE_MARKER_PROPERTIES *)parameters;
+			callbackInfo.markerCallbackInfo["event_id"] = instanceId;
+			callbackInfo.markerCallbackInfo["name"] = props->name;
+			callbackInfo.markerCallbackInfo["position"] = props->position;
+			callbackInfo.markerSignalEmitted = false;
+		} else if (type == FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_BEAT) {
+			FMOD_STUDIO_TIMELINE_BEAT_PROPERTIES *props = (FMOD_STUDIO_TIMELINE_BEAT_PROPERTIES *)parameters;
+			callbackInfo.beatCallbackInfo["event_id"] = instanceId;
+			callbackInfo.beatCallbackInfo["beat"] = props->beat;
+			callbackInfo.beatCallbackInfo["bar"] = props->bar;
+			callbackInfo.beatCallbackInfo["tempo"] = props->tempo;
+			callbackInfo.beatCallbackInfo["time_signature_upper"] = props->timesignatureupper;
+			callbackInfo.beatCallbackInfo["time_signature_lower"] = props->timesignaturelower;
+			callbackInfo.beatCallbackInfo["position"] = props->position;
+			callbackInfo.beatSignalEmitted = false;
+		}
+		else if (type == FMOD_STUDIO_EVENT_CALLBACK_SOUND_PLAYED || type == FMOD_STUDIO_EVENT_CALLBACK_SOUND_STOPPED) {
+			FMOD::Sound *sound = (FMOD::Sound *)parameters;
+			char n[256];
+			sound->getName(n, 256);
+			String name(n);
+			String mType = type == FMOD_STUDIO_EVENT_CALLBACK_SOUND_PLAYED ? "played" : "stopped";
+			callbackInfo.soundCallbackInfo["name"] = name;
+			callbackInfo.soundCallbackInfo["type"] = mType;
+			callbackInfo.soundSignalEmitted = false;
+		}
 	}
-
-	if (type == FMOD_STUDIO_EVENT_CALLBACK_SOUND_PLAYED || type == FMOD_STUDIO_EVENT_CALLBACK_SOUND_STOPPED) {
-		FMOD::Sound *sound = (FMOD::Sound *)parameters;
-		char n[256];
-		sound->getName(n, 256);
-		String name(n);
-		String mType = type == FMOD_STUDIO_EVENT_CALLBACK_SOUND_PLAYED ? "played" : "stopped";
-		mut->lock();
-		callbackInfo.soundCallbackInfo["name"] = name;
-		callbackInfo.soundCallbackInfo["type"] = mType;
-		callbackInfo.soundCallbackInfo["emitted"] = true;
-		mut->unlock();
-	}
-
+	mut->unlock();
 	return FMOD_OK;
 }
 
-// runs on the game thread
 void Fmod::runCallbacks() {
-	Callbacks::mut->lock();
-	for (auto e = Callbacks::eventCallbacks.front(); e; e = e->next()) {
-		auto cbInfo = e->get();
-
+	mut->lock();
+	for (auto e = events.front(); e; e = e->next()) {
+		FMOD::Studio::EventInstance *eventInstance = e->get();
+		CallbackInfo cbInfo = getEventInfo(eventInstance)->callbackInfo;
 		// check for Marker callbacks
-		if (cbInfo.markerCallbackInfo["emitted"]) {
-			cbInfo.markerCallbackInfo.erase("emitted");
+		if (!cbInfo.markerSignalEmitted) {
 			emit_signal("timeline_marker", cbInfo.markerCallbackInfo);
-			cbInfo.markerCallbackInfo["emitted"] = false;
+			cbInfo.markerSignalEmitted = true;
 		}
 
 		// check for Beat callbacks
-		if (cbInfo.beatCallbackInfo["emitted"]) {
-			cbInfo.beatCallbackInfo.erase("emitted");
+		if (!cbInfo.beatSignalEmitted) {
 			emit_signal("timeline_beat", cbInfo.beatCallbackInfo);
-			cbInfo.beatCallbackInfo["emitted"] = false;
+			cbInfo.beatSignalEmitted = true;
 		}
 
 		// check for Sound callbacks
-		if (cbInfo.soundCallbackInfo["emitted"]) {
-			cbInfo.soundCallbackInfo.erase("emitted");
+		if (!cbInfo.soundSignalEmitted) {
 			if (cbInfo.soundCallbackInfo["type"] == "played")
 				emit_signal("sound_played", cbInfo.soundCallbackInfo);
 			else
 				emit_signal("sound_stopped", cbInfo.soundCallbackInfo);
-			cbInfo.soundCallbackInfo["emitted"] = false;
+			cbInfo.soundSignalEmitted = true;
 		}
 	}
-	Callbacks::mut->unlock();
+	mut->unlock();
 }
 
 void Fmod::_bind_methods() {
@@ -1189,12 +1187,12 @@ Fmod::Fmod() {
 	system = nullptr;
 	coreSystem = nullptr;
 	listener = nullptr;
-	Callbacks::mut = Mutex::create();
+	mut = Mutex::create();
 	checkErrors(FMOD::Studio::System::create(&system));
 	checkErrors(system->getCoreSystem(&coreSystem));
 }
 
 Fmod::~Fmod() {
 	Fmod::shutdown();
-	Callbacks::mut->~Mutex();
+	mut->~Mutex();
 }
