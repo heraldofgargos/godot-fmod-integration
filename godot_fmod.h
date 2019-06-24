@@ -114,8 +114,8 @@ public:
 	void detachInstanceFromNode(uint64_t instanceId);
 	void pauseAllEvents();
 	void unpauseAllEvents();
-	void muteAllEvents();
-	void unmuteAllEvents();
+	void muteMasterBus();
+	void unmuteMasterBus();
 	bool banksStillLoading();
 	void waitForAllLoads();
 
