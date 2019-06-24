@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5604628... ReworkEventManagingAndMute : get callbacks.h back
 /*************************************************************************/
 /*  callbacks.h                                                          */
 /*************************************************************************/
@@ -35,22 +39,16 @@
 #include "api/studio/inc/fmod_studio.hpp"
 
 namespace Callbacks {
+    struct CallbackInfo {
+		bool markerSignalEmitted = true;
+		bool beatSignalEmitted = true;
+		bool soundSignalEmitted = true;
+		Dictionary markerCallbackInfo;
+		Dictionary beatCallbackInfo;
+		Dictionary soundCallbackInfo;
+	};
+	
+    extern Mutex *mut;
 
-Mutex *mut;
-
-struct CallbackInfo {
-	// Maintain callback info for Timeline Markers
-	Dictionary markerCallbackInfo;
-
-	// Maintain callback info for Timeline Beats & Bars
-	Dictionary beatCallbackInfo;
-
-	// Maintain callback info for Sounds played or stopped
-	Dictionary soundCallbackInfo;
-};
-
-Map<uint64_t, CallbackInfo> eventCallbacks;
-
-FMOD_RESULT F_CALLBACK eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_STUDIO_EVENTINSTANCE *event, void *parameters);
-
-} // namespace Callbacks
+    FMOD_RESULT F_CALLBACK eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_STUDIO_EVENTINSTANCE *event, void *parameters);
+}

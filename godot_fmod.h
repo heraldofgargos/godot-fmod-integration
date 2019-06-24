@@ -43,8 +43,29 @@
 #include "api/core/inc/fmod.hpp"
 #include "api/core/inc/fmod_errors.h"
 #include "api/studio/inc/fmod_studio.hpp"
+#include "callbacks.h"
 
-class Fmod : public Object {
+class Fmod : public Object
+{
+public:
+	struct EventInfo
+	{
+		// Is this event a one-shot instance managed by the integration
+		bool isOneShot = false;
+
+		// GameObject to which this event is attached
+		Object *gameObj = nullptr;
+
+		// Callback info associated with this event
+		Callbacks::CallbackInfo callbackInfo = Callbacks::CallbackInfo();
+
+		bool isMuted = false;
+
+		// Keep track of the event's previous volume level if muted
+		float oldVolume = 0.f;
+	};
+
+private:
 	GDCLASS(Fmod, Object);
 
 	FMOD::Studio::System *system;
@@ -63,15 +84,6 @@ class Fmod : public Object {
 	Map<String, FMOD::Studio::VCA *> VCAs;
 
 	Map<uint64_t, FMOD::Studio::EventInstance *> events;
-	struct EventInfo {
-            //old volume when muted
-            float oldVolume = 0.f;
-            bool isMuted = false;
-            //One shot events are managed by integration
-            bool isOneShot = false;
-            //GameObject to which this event is attached
-            Object *gameObj = nullptr;
-        };
 
 	// for playing sounds using FMOD Core / Low Level
 	Map<uint64_t, FMOD::Sound *> sounds;
@@ -87,10 +99,8 @@ class Fmod : public Object {
 	void loadVCA(const String &VCAPath);
 	void runCallbacks();
 	FMOD::Studio::EventInstance *createInstance(String eventPath, bool isOneShot, bool isAttached, Object *gameObject);
-	Fmod::EventInfo *getEventInfo(FMOD::Studio::EventInstance * eventInstance);
+	EventInfo *getEventInfo(FMOD::Studio::EventInstance *eventInstance);
 	void releaseOneEvent(FMOD::Studio::EventInstance *eventInstance);
-	void muteOneEvent(FMOD::Studio::EventInstance *instance);
-	void unmuteOneEvent(FMOD::Studio::EventInstance *instance);
 
 protected:
 	static Fmod *singleton;
@@ -124,10 +134,6 @@ public:
 	void unpauseAllEvents();
 	void muteMasterBus();
 	void unmuteMasterBus();
-	void muteAllEvents();
-	void unmuteAllEvents();
-	void muteEvent(const uint64_t instanceId);
-	void unmuteEvent(const uint64_t instanceId);
 	bool banksStillLoading();
 	void waitForAllLoads();
 
