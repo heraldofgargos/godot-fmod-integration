@@ -63,16 +63,16 @@ class Fmod : public Object {
 	Map<uint64_t, FMOD::Sound *> sounds;
 	Map<FMOD::Sound *, FMOD::Channel *> channels;
 
-	// keep track of one shot instances internally
-	Vector<FMOD::Studio::EventInstance *> oneShotInstances;
-	struct AttachedOneShot {
-		FMOD::Studio::EventInstance *instance;
-		Object *gameObj;
-	};
-	Vector<AttachedOneShot> attachedOneShots;
-
-	// events not directly managed by the integration
-	Map<uint64_t, FMOD::Studio::EventInstance *> unmanagedEvents;
+	Map<uint64_t, FMOD::Studio::EventInstance *> events;
+	struct EventInfo {
+            //old volume when muted
+            float oldVolume = 0.f;
+            bool isMuted = false;
+            //One shot events are managed by integration
+            bool isOneShot = false;
+            //GameObject to which this event is attached
+            Object *gameObj = nullptr;
+        };
 
 	FMOD_3D_ATTRIBUTES get3DAttributes(FMOD_VECTOR pos, FMOD_VECTOR up, FMOD_VECTOR forward, FMOD_VECTOR vel);
 	FMOD_VECTOR toFmodVector(Vector3 vec);
@@ -83,6 +83,9 @@ class Fmod : public Object {
 	void loadBus(const String &busPath);
 	void loadVCA(const String &VCAPath);
 	void runCallbacks();
+	FMOD::Studio::EventInstance *createInstance(String eventPath, bool isOneShot, bool isAttached, Object *gameObject);
+	Fmod::EventInfo *getEventInfo(FMOD::Studio::EventInstance * eventInstance);
+	void releaseOneEvent(FMOD::Studio::EventInstance *eventInstance);
 
 protected:
 	static void _bind_methods();
