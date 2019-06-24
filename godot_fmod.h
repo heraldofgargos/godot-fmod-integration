@@ -62,15 +62,16 @@ class Fmod : public Object {
 	Map<String, FMOD::Studio::Bus *> buses;
 	Map<String, FMOD::Studio::VCA *> VCAs;
 
-	// maintain attached instances internally
-	struct AttachedOneShot {
-		FMOD::Studio::EventInstance *instance;
-		Object *gameObj;
-	};
-	Vector<AttachedOneShot> attachedOneShots;
-
-	// events not directly managed by the integration
-	Map<uint64_t, FMOD::Studio::EventInstance *> unmanagedEvents;
+	Map<uint64_t, FMOD::Studio::EventInstance *> events;
+	struct EventInfo {
+            //old volume when muted
+            float oldVolume = 0.f;
+            bool isMuted = false;
+            //One shot events are managed by integration
+            bool isOneShot = false;
+            //GameObject to which this event is attached
+            Object *gameObj = nullptr;
+        };
 
 	// for playing sounds using FMOD Core / Low Level
 	Map<uint64_t, FMOD::Sound *> sounds;
@@ -85,6 +86,11 @@ class Fmod : public Object {
 	void loadBus(const String &busPath);
 	void loadVCA(const String &VCAPath);
 	void runCallbacks();
+	FMOD::Studio::EventInstance *createInstance(String eventPath, bool isOneShot, bool isAttached, Object *gameObject);
+	Fmod::EventInfo *getEventInfo(FMOD::Studio::EventInstance * eventInstance);
+	void releaseOneEvent(FMOD::Studio::EventInstance *eventInstance);
+	void muteOneEvent(FMOD::Studio::EventInstance *instance);
+	void unmuteOneEvent(FMOD::Studio::EventInstance *instance);
 
 protected:
 	static Fmod *singleton;
@@ -116,8 +122,12 @@ public:
 	void detachInstanceFromNode(uint64_t instanceId);
 	void pauseAllEvents();
 	void unpauseAllEvents();
+	void muteMasterBus();
+	void unmuteMasterBus();
 	void muteAllEvents();
 	void unmuteAllEvents();
+	void muteEvent(const uint64_t instanceId);
+	void unmuteEvent(const uint64_t instanceId);
 	bool banksStillLoading();
 	void waitForAllLoads();
 
