@@ -118,8 +118,8 @@ public:
 	void detachInstanceFromNode(uint64_t instanceId);
 	void pauseAllEvents();
 	void unpauseAllEvents();
-	void muteMasterBus();
-	void unmuteMasterBus();
+	void muteAllEvents();
+	void unmuteAllEvents();
 	bool banksStillLoading();
 	void waitForAllLoads();
 

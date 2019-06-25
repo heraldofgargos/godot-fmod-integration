@@ -685,7 +685,7 @@ void Fmod::unpauseAllEvents() {
 	}
 }
 
-void Fmod::muteMasterBus() {
+void Fmod::muteAllEvents() {
 	if (banks.size() > 1) {
 		FMOD::Studio::Bus *masterBus = nullptr;
 		if (checkErrors(system->getBus("bus:/", &masterBus))) {
@@ -694,7 +694,7 @@ void Fmod::muteMasterBus() {
 	}
 }
 
-void Fmod::unmuteMasterBus() {
+void Fmod::unmuteAllEvents() {
 	if (banks.size() > 1) {
 		FMOD::Studio::Bus *masterBus = nullptr;
 		if (checkErrors(system->getBus("bus:/", &masterBus))) {
@@ -942,8 +942,8 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("detach_instance_from_node", "id"), &Fmod::detachInstanceFromNode);
 	ClassDB::bind_method(D_METHOD("pause_all_events"), &Fmod::pauseAllEvents);
 	ClassDB::bind_method(D_METHOD("unpause_all_events"), &Fmod::unpauseAllEvents);
-	ClassDB::bind_method(D_METHOD("mute_master_bus"), &Fmod::muteMasterBus);
-	ClassDB::bind_method(D_METHOD("unmute_master_bus"), &Fmod::unmuteMasterBus);
+	ClassDB::bind_method(D_METHOD("mute_all_events"), &Fmod::muteAllEvents);
+	ClassDB::bind_method(D_METHOD("unmute_all_events"), &Fmod::unmuteAllEvents);
 	ClassDB::bind_method(D_METHOD("banks_still_loading"), &Fmod::banksStillLoading);
 	ClassDB::bind_method(D_METHOD("wait_for_all_loads"), &Fmod::waitForAllLoads);
 
