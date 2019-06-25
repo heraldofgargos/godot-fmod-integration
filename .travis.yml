@@ -13,8 +13,9 @@ matrix:
             [scons, pkg-config, build-essential, p7zip-full]
       env: PLATFORM=x11 ADDITIONAL_FLAGS="tools=no use_llvm=yes target=release bits=64"
 
-    - name: macOS
+    - name: MacOS
       os: osx
+      osx_image: xcode10.2
       compiler: clang
       env: ADDITIONAL_FLAGS="" PLATFORM="osx"
       addons:
