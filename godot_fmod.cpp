@@ -228,14 +228,14 @@ Dictionary Fmod::getPerformanceData() {
 	performanceData["memory"] = memPerfData;
 
 	// get the file usage
-	int64_t sampleBytesRead = 0;
-	int64_t streamBytesRead = 0;
-	int64_t otherBytesRead = 0;
+	long long sampleBytesRead = 0;
+	long long streamBytesRead = 0;
+	long long otherBytesRead = 0;
 	checkErrors(coreSystem->getFileUsage(&sampleBytesRead, &streamBytesRead, &otherBytesRead));
 	Dictionary filePerfData;
-	filePerfData["sample_bytes_read"] = sampleBytesRead;
-	filePerfData["stream_bytes_read"] = streamBytesRead;
-	filePerfData["other_bytes_read"] = otherBytesRead;
+	filePerfData["sample_bytes_read"] = (uint64_t)sampleBytesRead;
+	filePerfData["stream_bytes_read"] = (uint64_t)streamBytesRead;
+	filePerfData["other_bytes_read"] = (uint64_t)otherBytesRead;
 	performanceData["file"] = filePerfData;
 
 	return performanceData;
@@ -893,6 +893,19 @@ FMOD_RESULT F_CALLBACK Callbacks::eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE 
 		mut->unlock();
 	}
 
+	if (type == FMOD_STUDIO_EVENT_CALLBACK_SOUND_PLAYED || type == FMOD_STUDIO_EVENT_CALLBACK_SOUND_STOPPED) {
+		FMOD::Sound *sound = (FMOD::Sound *)parameters;
+		char n[256];
+		sound->getName(n, 256);
+		String name(n);
+		String mType = type == FMOD_STUDIO_EVENT_CALLBACK_SOUND_PLAYED ? "played" : "stopped";
+		mut->lock();
+		callbackInfo.soundCallbackInfo["name"] = name;
+		callbackInfo.soundCallbackInfo["type"] = mType;
+		callbackInfo.soundCallbackInfo["emitted"] = true;
+		mut->unlock();
+	}
+
 	return FMOD_OK;
 }
 
@@ -914,6 +927,16 @@ void Fmod::runCallbacks() {
 			cbInfo.beatCallbackInfo.erase("emitted");
 			emit_signal("timeline_beat", cbInfo.beatCallbackInfo);
 			cbInfo.beatCallbackInfo["emitted"] = false;
+		}
+
+		// check for Sound callbacks
+		if (cbInfo.soundCallbackInfo["emitted"]) {
+			cbInfo.soundCallbackInfo.erase("emitted");
+			if (cbInfo.soundCallbackInfo["type"] == "played")
+				emit_signal("sound_played", cbInfo.soundCallbackInfo);
+			else
+				emit_signal("sound_stopped", cbInfo.soundCallbackInfo);
+			cbInfo.soundCallbackInfo["emitted"] = false;
 		}
 	}
 	Callbacks::mut->unlock();
@@ -1007,6 +1030,8 @@ void Fmod::_bind_methods() {
 	/* Event Callback Signals */
 	ADD_SIGNAL(MethodInfo("timeline_beat", PropertyInfo(Variant::DICTIONARY, "params")));
 	ADD_SIGNAL(MethodInfo("timeline_marker", PropertyInfo(Variant::DICTIONARY, "params")));
+	ADD_SIGNAL(MethodInfo("sound_played", PropertyInfo(Variant::DICTIONARY, "params")));
+	ADD_SIGNAL(MethodInfo("sound_stopped", PropertyInfo(Variant::DICTIONARY, "params")));
 
 	/* FMOD_INITFLAGS */
 	BIND_CONSTANT(FMOD_INIT_NORMAL);
@@ -1055,6 +1080,8 @@ void Fmod::_bind_methods() {
 	/* FMOD_STUDIO_EVENT_CALLBACK_TYPE */
 	BIND_CONSTANT(FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_MARKER);
 	BIND_CONSTANT(FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_BEAT);
+	BIND_CONSTANT(FMOD_STUDIO_EVENT_CALLBACK_SOUND_PLAYED);
+	BIND_CONSTANT(FMOD_STUDIO_EVENT_CALLBACK_SOUND_STOPPED);
 
 	/* FMOD_SPEAKERMODE */
 	BIND_CONSTANT(FMOD_SPEAKERMODE_DEFAULT);

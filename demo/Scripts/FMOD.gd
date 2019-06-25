@@ -8,11 +8,19 @@ func _ready():
 	FMOD = Fmod.new()
 	FMOD.connect("timeline_beat", self, "_on_beat")
 	FMOD.connect("timeline_marker", self, "_on_marker")
+	FMOD.connect("sound_played", self, "_on_sound_played")
+	FMOD.connect("sound_stopped", self, "_on_sound_stopped")
 	
 func _on_beat(params):	
 	print(params)
 
 func _on_marker(params):
+	print(params)
+	
+func _on_sound_played(params):
+	print(params)
+	
+func _on_sound_stopped(params):
 	print(params)
 	
 #warning-ignore:unused_argument

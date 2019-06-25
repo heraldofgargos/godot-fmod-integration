@@ -41,6 +41,7 @@ Mutex *mut;
 struct CallbackInfo {
 	Dictionary markerCallbackInfo;
 	Dictionary beatCallbackInfo;
+	Dictionary soundCallbackInfo;
 };
 
 Map<uint64_t, CallbackInfo> eventCallbacks;
