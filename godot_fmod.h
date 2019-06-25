@@ -44,9 +44,11 @@
 #include "api/core/inc/fmod_errors.h"
 #include "api/studio/inc/fmod_studio.hpp"
 
-class Fmod : public Object {
+class Fmod : public Object
+{
 public:
-	struct CallbackInfo {
+	struct CallbackInfo
+	{
 		bool markerSignalEmitted = true;
 		bool beatSignalEmitted = true;
 		bool soundSignalEmitted = true;
@@ -54,17 +56,23 @@ public:
 		Dictionary beatCallbackInfo;
 		Dictionary soundCallbackInfo;
 	};
-	struct EventInfo {
-		//old volume when muted
-		float oldVolume = 0.f;
-		bool isMuted = false;
-		//One shot events are managed by integration
+	struct EventInfo
+	{
+		// Is this event a one-shot instance managed by the integration
 		bool isOneShot = false;
-		//GameObject to which this event is attached
+
+		// GameObject to which this event is attached
 		Object *gameObj = nullptr;
-		//Store event callbacks informations
+
+		// Callback info associated with this event
 		CallbackInfo callbackInfo = CallbackInfo();
+
+		bool isMuted = false;
+
+		// Keep track of the event's previous volume level if muted
+		float oldVolume = 0.f;
 	};
+
 private:
 	GDCLASS(Fmod, Object);
 
@@ -96,7 +104,7 @@ private:
 	void loadVCA(const String &VCAPath);
 	void runCallbacks();
 	FMOD::Studio::EventInstance *createInstance(String eventPath, bool isOneShot, bool isAttached, Object *gameObject);
-	EventInfo *getEventInfo(FMOD::Studio::EventInstance * eventInstance);
+	EventInfo *getEventInfo(FMOD::Studio::EventInstance *eventInstance);
 	void releaseOneEvent(FMOD::Studio::EventInstance *eventInstance);
 	void muteOneEvent(FMOD::Studio::EventInstance *instance);
 	void unmuteOneEvent(FMOD::Studio::EventInstance *instance);
@@ -105,7 +113,6 @@ protected:
 	static void _bind_methods();
 
 public:
-
 	/* system functions */
 	void init(int numOfChannels, int studioFlags, int flags);
 	void update();
