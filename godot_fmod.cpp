@@ -45,11 +45,6 @@ void Fmod::update() {
 	for (auto e = events.front(); e; e = e->next()) {
 		FMOD::Studio::EventInstance *eventInstance = e->get();
         EventInfo *eventInfo = getEventInfo(eventInstance);
-        if (eventInfo->isOneShot) {
-			eventInstance->release();
-            releaseOneEvent(eventInstance);
-            continue;
-        }
         if (eventInfo->gameObj && isNull(eventInfo->gameObj)) {
             FMOD_STUDIO_STOP_MODE m = FMOD_STUDIO_STOP_IMMEDIATE;
             checkErrors(eventInstance->stop(m));
@@ -322,9 +317,8 @@ const bool isAttached, Object *gameObject) {
 	auto desc = eventDescriptions.find(eventPath);
 	FMOD::Studio::EventInstance *instance;
 	checkErrors(desc->value()->createInstance(&instance));
-	if (instance) {
+	if (instance && !isOneShot) {
         auto *eventInfo = new EventInfo();
-        eventInfo->isOneShot = isOneShot;
         eventInfo->gameObj = gameObject;
         instance->setUserData(eventInfo);
         auto instanceId = (uint64_t)instance;
@@ -435,14 +429,7 @@ float Fmod::getEventVolume(uint64_t instanceId) {
 	auto i = events.find(instanceId);
 	float volume = 0.0f;
 	FMOD::Studio::EventInstance *event = i->value();
-	if (event) {
-        EventInfo *eventInfo = getEventInfo(event);
-        if (eventInfo->isMuted) {
-            return eventInfo->oldVolume;
-        } else {
-            checkErrors(event->getVolume(&volume));
-        }
-	}
+	checkErrors(event->getVolume(&volume));
 	return volume;
 }
 
@@ -450,14 +437,7 @@ void Fmod::setEventVolume(uint64_t instanceId, float volume) {
 	if (!events.has(instanceId)) return;
 	auto i = events.find(instanceId);
 	FMOD::Studio::EventInstance *event = i->value();
-	if (event) {
-        EventInfo *eventInfo = getEventInfo(event);
-        if (eventInfo->isMuted) {
-            eventInfo->oldVolume = volume;
-        } else {
-            checkErrors(event->setVolume(volume));
-        }
-	}
+    checkErrors(event->setVolume(volume));
 }
 
 int Fmod::getEventTimelinePosition(uint64_t instanceId) {
@@ -617,6 +597,7 @@ void Fmod::playOneShot(const String &eventName, Object *gameObj) {
             updateInstance3DAttributes(instance, gameObj);
         }
         checkErrors(instance->start());
+		instance->release();
     }
 }
 
@@ -635,6 +616,7 @@ void Fmod::playOneShotWithParams(const String &eventName, Object *gameObj, const
             checkErrors(instance->setParameterByName(k.ascii().get_data(), v));
         }
         checkErrors(instance->start());
+		instance->release();
     }
 }
 
@@ -644,6 +626,7 @@ void Fmod::playOneShotAttached(const String &eventName, Object *gameObj) {
         if (instance) {
             checkErrors(instance->start());
         }
+		instance->release();
     }
 }
 
@@ -659,6 +642,7 @@ void Fmod::playOneShotAttachedWithParams(const String &eventName, Object *gameOb
                 checkErrors(instance->setParameterByName(k.ascii().get_data(), v));
             }
             checkErrors(instance->start());
+			instance->release();
         }
     }
 }
