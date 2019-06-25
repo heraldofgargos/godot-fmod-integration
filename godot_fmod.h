@@ -50,19 +50,11 @@ class Fmod : public Object
 public:
 	struct EventInfo
 	{
-		// Is this event a one-shot instance managed by the integration
-		bool isOneShot = false;
-
 		// GameObject to which this event is attached
 		Object *gameObj = nullptr;
 
 		// Callback info associated with this event
 		Callbacks::CallbackInfo callbackInfo = Callbacks::CallbackInfo();
-
-		bool isMuted = false;
-
-		// Keep track of the event's previous volume level if muted
-		float oldVolume = 0.f;
 	};
 
 private:
