@@ -29,7 +29,7 @@
 
 #include "godot_fmod.h"
 
-Mutex *mut;
+Mutex *Callbacks::mut;
 
 void Fmod::init(int numOfChannels, int studioFlags, int flags) {
 	// initialize FMOD Studio and FMOD Low Level System with provided flags
@@ -361,13 +361,13 @@ void Fmod::releaseEvent(uint64_t instanceId) {
 }
 
 void Fmod::releaseOneEvent(FMOD::Studio::EventInstance *eventInstance) {
-	mut->lock();
+	Callbacks::mut->lock();
 	EventInfo *eventInfo = getEventInfo(eventInstance);
 	eventInstance->setUserData(nullptr);
     events.erase((uint64_t) eventInstance);
     checkErrors(eventInstance->release());
     delete &eventInfo;
-	mut->unlock();
+	Callbacks::mut->unlock();
 }
 
 void Fmod::startEvent(uint64_t instanceId) {
@@ -918,12 +918,12 @@ void Fmod::setCallback(uint64_t instanceId, int callbackMask) {
 	if (!events.has(instanceId)) return;
 	FMOD::Studio::EventInstance *event = events.find(instanceId)->value();
 	if (event) {
-		checkErrors(event->setCallback(eventCallback, callbackMask));
+		checkErrors(event->setCallback(Callbacks::eventCallback, callbackMask));
 	}
 }
 
 // runs on the Studio update thread, not the game thread
-FMOD_RESULT F_CALLBACK eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_STUDIO_EVENTINSTANCE *event, void *parameters) {
+FMOD_RESULT F_CALLBACK Callbacks::eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_STUDIO_EVENTINSTANCE *event, void *parameters) {
 
 	FMOD::Studio::EventInstance *instance = (FMOD::Studio::EventInstance *)event;
 	auto instanceId = (uint64_t)instance;
@@ -931,7 +931,7 @@ FMOD_RESULT F_CALLBACK eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_
 	mut->lock();
     instance->getUserData((void **)&eventInfo);
 	if (eventInfo) {
-		Fmod::CallbackInfo callbackInfo = eventInfo->callbackInfo;
+		Callbacks::CallbackInfo callbackInfo = eventInfo->callbackInfo;
 
 		if (type == FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_MARKER) {
 			FMOD_STUDIO_TIMELINE_MARKER_PROPERTIES *props = (FMOD_STUDIO_TIMELINE_MARKER_PROPERTIES *)parameters;
@@ -966,10 +966,10 @@ FMOD_RESULT F_CALLBACK eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_
 }
 
 void Fmod::runCallbacks() {
-	mut->lock();
+	Callbacks::mut->lock();
 	for (auto e = events.front(); e; e = e->next()) {
 		FMOD::Studio::EventInstance *eventInstance = e->get();
-		CallbackInfo cbInfo = getEventInfo(eventInstance)->callbackInfo;
+		Callbacks::CallbackInfo cbInfo = getEventInfo(eventInstance)->callbackInfo;
 		// check for Marker callbacks
 		if (!cbInfo.markerSignalEmitted) {
 			emit_signal("timeline_marker", cbInfo.markerCallbackInfo);
@@ -991,7 +991,7 @@ void Fmod::runCallbacks() {
 			cbInfo.soundSignalEmitted = true;
 		}
 	}
-	mut->unlock();
+	Callbacks::mut->unlock();
 }
 
 void Fmod::_bind_methods() {
@@ -1187,12 +1187,12 @@ Fmod::Fmod() {
 	system = nullptr;
 	coreSystem = nullptr;
 	listener = nullptr;
-	mut = Mutex::create();
+	Callbacks::mut = Mutex::create();
 	checkErrors(FMOD::Studio::System::create(&system));
 	checkErrors(system->getCoreSystem(&coreSystem));
 }
 
 Fmod::~Fmod() {
 	Fmod::shutdown();
-	mut->~Mutex();
+	Callbacks::mut->~Mutex();
 }

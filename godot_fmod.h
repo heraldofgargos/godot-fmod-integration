@@ -43,19 +43,11 @@
 #include "api/core/inc/fmod.hpp"
 #include "api/core/inc/fmod_errors.h"
 #include "api/studio/inc/fmod_studio.hpp"
+#include "callbacks.h"
 
 class Fmod : public Object
 {
 public:
-	struct CallbackInfo
-	{
-		bool markerSignalEmitted = true;
-		bool beatSignalEmitted = true;
-		bool soundSignalEmitted = true;
-		Dictionary markerCallbackInfo;
-		Dictionary beatCallbackInfo;
-		Dictionary soundCallbackInfo;
-	};
 	struct EventInfo
 	{
 		// Is this event a one-shot instance managed by the integration
@@ -65,7 +57,7 @@ public:
 		Object *gameObj = nullptr;
 
 		// Callback info associated with this event
-		CallbackInfo callbackInfo = CallbackInfo();
+		Callbacks::CallbackInfo callbackInfo = Callbacks::CallbackInfo();
 
 		bool isMuted = false;
 
@@ -204,7 +196,3 @@ public:
 	Fmod();
 	~Fmod();
 };
-
-extern Mutex *mut;
-
-FMOD_RESULT F_CALLBACK eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_STUDIO_EVENTINSTANCE *event, void *parameters);
