@@ -98,8 +98,6 @@ private:
 	FMOD::Studio::EventInstance *createInstance(String eventPath, bool isOneShot, bool isAttached, Object *gameObject);
 	EventInfo *getEventInfo(FMOD::Studio::EventInstance *eventInstance);
 	void releaseOneEvent(FMOD::Studio::EventInstance *eventInstance);
-	void muteOneEvent(FMOD::Studio::EventInstance *instance);
-	void unmuteOneEvent(FMOD::Studio::EventInstance *instance);
 
 protected:
 	static void _bind_methods();
@@ -130,10 +128,6 @@ public:
 	void unpauseAllEvents();
 	void muteMasterBus();
 	void unmuteMasterBus();
-	void muteAllEvents();
-	void unmuteAllEvents();
-	void muteEvent(const uint64_t instanceId);
-	void unmuteEvent(const uint64_t instanceId);
 	bool banksStillLoading();
 	void waitForAllLoads();
 

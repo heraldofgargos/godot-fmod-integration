@@ -46,12 +46,9 @@ void Fmod::update() {
 		FMOD::Studio::EventInstance *eventInstance = e->get();
         EventInfo *eventInfo = getEventInfo(eventInstance);
         if (eventInfo->isOneShot) {
-            FMOD_STUDIO_PLAYBACK_STATE s;
-            checkErrors(eventInstance->getPlaybackState(&s));
-            if (s == FMOD_STUDIO_PLAYBACK_STOPPED) {
-                releaseOneEvent(eventInstance);
-                continue;
-            }
+			eventInstance->release();
+            releaseOneEvent(eventInstance);
+            continue;
         }
         if (eventInfo->gameObj && isNull(eventInfo->gameObj)) {
             FMOD_STUDIO_STOP_MODE m = FMOD_STUDIO_STOP_IMMEDIATE;
@@ -722,63 +719,6 @@ void Fmod::unmuteMasterBus() {
 	}
 }
 
-void Fmod::muteAllEvents() {
-    for (auto e = events.front(); e; e = e->next()) {
-		FMOD::Studio::EventInstance *eventInstance = e->get();
-        muteOneEvent(eventInstance);
-    }
-}
-
-void Fmod::unmuteAllEvents() {
-    for (auto e = events.front(); e; e = e->next()) {
-		FMOD::Studio::EventInstance *eventInstance = e->get();
-        unmuteOneEvent(eventInstance);
-    }
-}
-
-void Fmod::muteEvent(const uint64_t instanceId) {
-	FMOD::Studio::EventInstance * event = events.find(instanceId)->value();
-    if (event) {
-        muteOneEvent(events[instanceId]);
-    } else {
-        print_error("FMOD Sound System: Unable to find event");
-    }
-}
-
-void Fmod::unmuteEvent(const uint64_t instanceId) {
-	FMOD::Studio::EventInstance * event = events.find(instanceId)->value();
-    if (event) {
-        unmuteOneEvent(events[instanceId]);
-    } else {
-        print_error("FMOD Sound System: This event is not muted");
-    }
-}
-
-void Fmod::muteOneEvent(FMOD::Studio::EventInstance *instance) {
-    float volume = 0.f;
-    if (checkErrors(instance->getVolume(&volume)) && checkErrors(instance->setVolume(0.f))) {
-        EventInfo *eventInfo = getEventInfo(instance);
-        eventInfo->oldVolume = volume;
-        eventInfo->isMuted = true;
-    } else {
-        print_error("FMOD Sound System: Failed to mute event");
-    }
-}
-
-void Fmod::unmuteOneEvent(FMOD::Studio::EventInstance *instance) {
-    EventInfo *eventInfo = getEventInfo(instance);
-	if (eventInfo->isMuted) {
-		return;
-	}
-    if (checkErrors(instance->setVolume(eventInfo->oldVolume))) {
-        eventInfo->isMuted = false;
-    }
-	else {
-		print_error("FMOD Sound System: Failed to unmute event");
-	}
-	
-}
-
 bool Fmod::banksStillLoading() {
 	for (auto e = banks.front(); e; e = e->next()) {
 		auto bank = e->get();
@@ -1020,10 +960,6 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("unpause_all_events"), &Fmod::unpauseAllEvents);
 	ClassDB::bind_method(D_METHOD("mute_master_bus"), &Fmod::muteMasterBus);
 	ClassDB::bind_method(D_METHOD("unmute_master_bus"), &Fmod::unmuteMasterBus);
-	ClassDB::bind_method(D_METHOD("mute_all_events"), &Fmod::muteAllEvents);
-	ClassDB::bind_method(D_METHOD("unmute_all_events"), &Fmod::unmuteAllEvents);
-	ClassDB::bind_method(D_METHOD("mute_event"), &Fmod::muteEvent);
-	ClassDB::bind_method(D_METHOD("unmute_event"), &Fmod::unmuteEvent);
 	ClassDB::bind_method(D_METHOD("banks_still_loading"), &Fmod::banksStillLoading);
 	ClassDB::bind_method(D_METHOD("wait_for_all_loads"), &Fmod::waitForAllLoads);
 
