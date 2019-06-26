@@ -1,4 +1,4 @@
-# FMOD Studio integration for Godot
+# FMOD Studio integration for Godot [![Build Status](https://travis-ci.com/alexfonseka/godot-fmod-integration.svg?branch=master)](https://travis-ci.com/alexfonseka/godot-fmod-integration)
 
 A Godot C++ module that provides an integration and GDScript bindings for the FMOD Studio API.
 
