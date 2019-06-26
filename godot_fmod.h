@@ -59,9 +59,7 @@ class Fmod : public Object {
 	Map<String, FMOD::Studio::Bank *> banks;
 	Map<String, FMOD::Studio::EventDescription *> eventDescriptions;
 	Map<String, FMOD::Studio::Bus *> buses;
-	Map<String, FMOD::Studio::VCA *> VCAs;
-	Map<uint64_t, FMOD::Sound *> sounds;
-	Map<FMOD::Sound *, FMOD::Channel *> channels;
+	Map<String, FMOD::Studio::VCA *> VCAs;	
 
 	// maintain attached one shot instances
 	struct AttachedOneShot {
@@ -72,6 +70,10 @@ class Fmod : public Object {
 
 	// events not directly managed by the integration
 	Map<uint64_t, FMOD::Studio::EventInstance *> unmanagedEvents;
+
+	// for playing sounds using FMOD Core / Low Level
+	Map<uint64_t, FMOD::Sound *> sounds;
+	Map<FMOD::Sound *, FMOD::Channel *> channels;
 
 	FMOD_3D_ATTRIBUTES get3DAttributes(FMOD_VECTOR pos, FMOD_VECTOR up, FMOD_VECTOR forward, FMOD_VECTOR vel);
 	FMOD_VECTOR toFmodVector(Vector3 vec);
@@ -87,7 +89,7 @@ protected:
 	static void _bind_methods();
 
 public:
-	/* system functions */
+	/* System functions */
 	void init(int numOfChannels, int studioFlags, int flags);
 	void update();
 	void shutdown();
@@ -101,7 +103,7 @@ public:
 	void setDriver(int id);
 	Dictionary getPerformanceData();
 
-	/* helper functions */
+	/* Helper functions */
 	void playOneShot(const String &eventName, Object *gameObj);
 	void playOneShotWithParams(const String &eventName, Object *gameObj, const Dictionary &parameters);
 	void playOneShotAttached(const String &eventName, Object *gameObj);
@@ -115,7 +117,7 @@ public:
 	bool banksStillLoading();
 	void waitForAllLoads();
 
-	/* bank functions */
+	/* Bank functions */
 	String loadbank(const String &pathToBank, int flags);
 	void unloadBank(const String &pathToBank);
 	int getBankLoadingState(const String &pathToBank);
@@ -124,7 +126,7 @@ public:
 	int getBankStringCount(const String &pathToBank);
 	int getBankVCACount(const String &pathToBank);
 
-	/* event functions */
+	/* EventInstance functions */
 	uint64_t createEventInstance(const String &eventPath);
 	float getEventParameter(uint64_t instanceId, const String &parameterName);
 	void setEventParameter(uint64_t instanceId, const String &parameterName, float value);
@@ -146,7 +148,7 @@ public:
 	bool isEventVirtual(uint64_t instanceId);
 	void setCallback(uint64_t instanceId, int callbackMask);
 
-	/* bus functions */
+	/* Bus functions */
 	bool getBusMute(const String &busPath);
 	bool getBusPaused(const String &busPath);
 	float getBusVolume(const String &busPath);
@@ -159,7 +161,7 @@ public:
 	float getVCAVolume(const String &VCAPath);
 	void setVCAVolume(const String &VCAPath, float volume);
 
-	/* Sound functions */
+	/* FMOD Core Sound functions */
 	void playSound(uint64_t instanceId);
 	uint64_t loadSound(const String &path, int mode);
 	void releaseSound(uint64_t instanceId);
