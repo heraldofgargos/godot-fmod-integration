@@ -44,7 +44,7 @@ void Fmod::update() {
 	// update and clean up attached one shots
 	for (int i = 0; i < attachedOneShots.size(); i++) {
 		auto aShot = attachedOneShots.get(i);
-		if (isNull(aShot.gameObj)) {
+		if (isNull(aShot.gameObj)) { // GameObject has been freed
 			FMOD_STUDIO_STOP_MODE m = FMOD_STUDIO_STOP_IMMEDIATE;
 			checkErrors(aShot.instance->stop(m));
 			checkErrors(aShot.instance->release());
@@ -54,7 +54,7 @@ void Fmod::update() {
 		}
 		FMOD_STUDIO_PLAYBACK_STATE s;
 		checkErrors(aShot.instance->getPlaybackState(&s));
-		if (s == FMOD_STUDIO_PLAYBACK_STOPPED) {
+		if (s == FMOD_STUDIO_PLAYBACK_STOPPED) { // one shot has finished playing to a completion
 			checkErrors(aShot.instance->release());
 			attachedOneShots.remove(i);
 			i--;
@@ -77,7 +77,7 @@ void Fmod::updateInstance3DAttributes(FMOD::Studio::EventInstance *instance, Obj
 	// try to set 3D attributes
 	if (instance && !isNull(o)) {
 		CanvasItem *ci = Object::cast_to<CanvasItem>(o);
-		if (ci != nullptr) {
+		if (ci != nullptr) { // GameObject is 2D
 			Transform2D t2d = ci->get_transform();
 			Vector2 posVector = t2d.get_origin() / distanceScale;
 			// in 2D the distance is measured in pixels and position translates to screen coords
@@ -86,7 +86,7 @@ void Fmod::updateInstance3DAttributes(FMOD::Studio::EventInstance *instance, Obj
 					up(0, 1, 0), forward(0, 0, 1), vel(0, 0, 0);
 			FMOD_3D_ATTRIBUTES attr = get3DAttributes(toFmodVector(pos), toFmodVector(up), toFmodVector(forward), toFmodVector(vel));
 			checkErrors(instance->set3DAttributes(&attr));
-		} else {
+		} else { // GameObject is 3D
 			// needs testing
 			Spatial *s = Object::cast_to<Spatial>(o);
 			Transform t = s->get_transform();
@@ -114,7 +114,7 @@ void Fmod::setListenerAttributes() {
 		return;
 	}
 	CanvasItem *ci = Object::cast_to<CanvasItem>(listener);
-	if (ci != nullptr) {
+	if (ci != nullptr) { // Listener is in 2D space
 		Transform2D t2d = ci->get_transform();
 		Vector2 posVector = t2d.get_origin() / distanceScale;
 		// in 2D the distance is measured in pixels and position translates to screen coords
@@ -124,7 +124,7 @@ void Fmod::setListenerAttributes() {
 		FMOD_3D_ATTRIBUTES attr = get3DAttributes(toFmodVector(pos), toFmodVector(up), toFmodVector(forward), toFmodVector(vel));
 		checkErrors(system->setListenerAttributes(0, &attr));
 
-	} else {
+	} else { // Listener is in 3D space
 		// needs testing
 		Spatial *s = Object::cast_to<Spatial>(listener);
 		Transform t = s->get_transform();

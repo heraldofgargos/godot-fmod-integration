@@ -59,7 +59,7 @@ class Fmod : public Object {
 	Map<String, FMOD::Studio::Bank *> banks;
 	Map<String, FMOD::Studio::EventDescription *> eventDescriptions;
 	Map<String, FMOD::Studio::Bus *> buses;
-	Map<String, FMOD::Studio::VCA *> VCAs;	
+	Map<String, FMOD::Studio::VCA *> VCAs;
 
 	// maintain attached one shot instances
 	struct AttachedOneShot {
