@@ -60,7 +60,7 @@ One-shots are great for quick sounds which you would want to simply fire and for
 ```gdscript
 # create an event instance
 # this is a music event that has been authored in the Studio editor
-var my_music_event = Fmod.event_create_instance("event:/Waveshaper - Wisdom of Rage")
+var my_music_event = Fmod.create_event_instance("event:/Waveshaper - Wisdom of Rage")
 
 # start the event
 Fmod.event_start(my_music_event)
@@ -132,7 +132,7 @@ You can have events subscribe to Studio callbacks to implement rhythm based game
 
 ```gdscript
 # create a new event instance
-var my_music_event = Fmod.event_create_instance("event:/schmid - 140 Part 2B")
+var my_music_event = Fmod.create_event_instance("event:/schmid - 140 Part 2B")
 
 # request callbacks from this instance
 # in this case request both Marker and Beat callbacks
