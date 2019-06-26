@@ -70,19 +70,19 @@ install:
 
   - rm -rf api
   - mv .travis/download-fmod.sh ./ && chmod +x download-fmod.sh && ./download-fmod.sh $FMODUSER $FMODPASS $PLATFORM
-  - if [[ "$PLATFORM" == "x11" ]]; then tar -xvf fmodstudioapi20001linux.tar.gz; fi
-  - if [[ "$PLATFORM" == "osx" ]]; then hdiutil attach fmodstudioapi20001osx.dmg; fi
+  - if [[ "$PLATFORM" == "x11" ]]; then tar -xvf fmodstudioapi20002linux.tar.gz; fi
+  - if [[ "$PLATFORM" == "osx" ]]; then hdiutil attach fmodstudioapi20002osx.dmg; fi
   - if [[ "$PLATFORM" == "windows" ]]; then
-    7z x fmodstudioapi20001win-installer.exe;
+    7z x fmodstudioapi20002win-installer.exe;
     mv api/core/lib/x64/fmod_vc.lib api/core/lib/x64/fmod64_vc.windows.tools.64.lib;
     mv api/studio/lib/x64/fmodstudio_vc.lib api/studio/lib/x64/fmodstudio64_vc.windows.tools.64.lib;
     fi
-  - if [[ "$PLATFORM" == "iphone" ]]; then hdiutil attach fmodstudioapi20001ios.dmg; fi
-  - if [[ "$PLATFORM" == "android" ]]; then tar -xvf fmodstudioapi20001android.tar.gz; fi
-  - if [[ "$PLATFORM" == "x11" ]]; then mv fmodstudioapi20001linux/api ./; fi
+  - if [[ "$PLATFORM" == "iphone" ]]; then hdiutil attach fmodstudioapi20002ios.dmg; fi
+  - if [[ "$PLATFORM" == "android" ]]; then tar -xvf fmodstudioapi20002android.tar.gz; fi
+  - if [[ "$PLATFORM" == "x11" ]]; then mv fmodstudioapi20002linux/api ./; fi
   - if [[ "$PLATFORM" == "osx" ]]; then cp -r "/Volumes/FMOD Programmers API Mac/FMOD Programmers API/api" ./; fi
   - if [[ "$PLATFORM" == "iphone" ]]; then cp -r "/Volumes/FMOD Programmers API iOS/FMOD Programmers API/api" ./; fi
-  - if [[ "$PLATFORM" == "android" ]]; then mv fmodstudioapi20001android/api ./; fi
+  - if [[ "$PLATFORM" == "android" ]]; then mv fmodstudioapi20002android/api ./; fi
 
   - cd .. && git clone https://github.com/godotengine/godot.git && cd godot && git checkout 3.1.1-stable
   - mv ../godot-fmod-integration modules/fmod
