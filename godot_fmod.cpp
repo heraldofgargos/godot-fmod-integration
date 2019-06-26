@@ -41,18 +41,6 @@ void Fmod::init(int numOfChannels, int studioFlags, int flags) {
 }
 
 void Fmod::update() {
-	// clean up one shots
-	for (int i = 0; i < oneShotInstances.size(); i++) {
-		auto instance = oneShotInstances.get(i);
-		FMOD_STUDIO_PLAYBACK_STATE s;
-		checkErrors(instance->getPlaybackState(&s));
-		if (s == FMOD_STUDIO_PLAYBACK_STOPPED) {
-			checkErrors(instance->release());
-			oneShotInstances.remove(i);
-			i--;
-		}
-	}
-
 	// update and clean up attached one shots
 	for (int i = 0; i < attachedOneShots.size(); i++) {
 		auto aShot = attachedOneShots.get(i);
@@ -592,7 +580,7 @@ void Fmod::playOneShot(const String &eventName, Object *gameObj) {
 			updateInstance3DAttributes(instance, gameObj);
 		}
 		checkErrors(instance->start());
-		oneShotInstances.push_back(instance);
+		checkErrors(instance->release());
 	}
 }
 
@@ -618,7 +606,7 @@ void Fmod::playOneShotWithParams(const String &eventName, Object *gameObj, const
 			checkErrors(instance->setParameterByName(k.ascii().get_data(), v));
 		}
 		checkErrors(instance->start());
-		oneShotInstances.push_back(instance);
+		checkErrors(instance->release());
 	}
 }
 

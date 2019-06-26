@@ -63,8 +63,7 @@ class Fmod : public Object {
 	Map<uint64_t, FMOD::Sound *> sounds;
 	Map<FMOD::Sound *, FMOD::Channel *> channels;
 
-	// keep track of one shot instances internally
-	Vector<FMOD::Studio::EventInstance *> oneShotInstances;
+	// maintain attached one shot instances
 	struct AttachedOneShot {
 		FMOD::Studio::EventInstance *instance;
 		Object *gameObj;
