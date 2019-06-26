@@ -306,10 +306,25 @@ int Fmod::getBankVCACount(const String &pathToBank) {
 	return -1;
 }
 
+uint64_t Fmod::createEventFromDesc(uint64_t descHandle) {
+	if (!ptrToEventDescMap.has(descHandle)) return 0;
+
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	FMOD::Studio::EventInstance *instance = nullptr;
+	checkErrors(desc->createInstance(&instance));
+	if (instance) {
+		auto ptr = (uint64_t)instance;
+		unmanagedEvents.insert(ptr, instance);
+		return ptr;
+	}
+	return 0;
+}
+
 uint64_t Fmod::createEventInstance(const String &eventPath) {
 	if (!eventDescriptions.has(eventPath)) {
 		FMOD::Studio::EventDescription *desc = nullptr;
-		checkErrors(system->getEvent(eventPath.ascii().get_data(), &desc));
+		auto res = checkErrors(system->getEvent(eventPath.ascii().get_data(), &desc));
+		if (!res) return 0;
 		eventDescriptions.insert(eventPath, desc);
 	}
 	auto desc = eventDescriptions.find(eventPath);
@@ -845,12 +860,38 @@ void Fmod::setSound3DSettings(float dopplerScale, float distanceFactor, float ro
 	}
 }
 
+uint64_t Fmod::getEvent(const String &path) {
+	if (!eventDescriptions.has(path)) {
+		FMOD::Studio::EventDescription *desc = nullptr;
+		auto res = checkErrors(system->getEvent(path.ascii().get_data(), &desc));
+		if (!res) return 0;
+		eventDescriptions.insert(path, desc);
+	}
+	auto desc = eventDescriptions.find(path)->value();
+	auto ptr = (uint64_t)desc;
+	ptrToEventDescMap.insert(ptr, desc);
+
+	return ptr;
+}
+
 void Fmod::setCallback(uint64_t instanceId, int callbackMask) {
 	if (!unmanagedEvents.has(instanceId)) return;
 	auto i = unmanagedEvents.find(instanceId);
 	if (i->value() && checkErrors(i->value()->setCallback(Callbacks::eventCallback, callbackMask))) {
 		Callbacks::eventCallbacks.insert(instanceId, Callbacks::CallbackInfo());
 	}
+}
+
+uint64_t Fmod::getEventDescription(uint64_t instanceId) {
+	if (!unmanagedEvents.has(instanceId)) return 0;
+
+	auto instance = unmanagedEvents.find(instanceId)->value();
+	FMOD::Studio::EventDescription *desc = nullptr;
+	checkErrors(instance->getDescription(&desc));
+	auto ptr = (uint64_t)desc;
+	ptrToEventDescMap.insert(ptr, desc);
+
+	return ptr;
 }
 
 // runs on the Studio update thread, not the game thread
@@ -946,8 +987,9 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("system_get_driver"), &Fmod::getDriver);
 	ClassDB::bind_method(D_METHOD("system_set_driver", "id"), &Fmod::setDriver);
 	ClassDB::bind_method(D_METHOD("system_get_performance_data"), &Fmod::getPerformanceData);
+	ClassDB::bind_method(D_METHOD("system_get_event", "path"), &Fmod::getEvent);
 
-	/* integration helper functions */
+	/* Integration helper functions */
 	ClassDB::bind_method(D_METHOD("create_event_instance", "event_path"), &Fmod::createEventInstance);
 	ClassDB::bind_method(D_METHOD("play_one_shot", "event_name", "node"), &Fmod::playOneShot);
 	ClassDB::bind_method(D_METHOD("play_one_shot_with_params", "event_name", "node", "initial_parameters"), &Fmod::playOneShotWithParams);
@@ -962,7 +1004,7 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("banks_still_loading"), &Fmod::banksStillLoading);
 	ClassDB::bind_method(D_METHOD("wait_for_all_loads"), &Fmod::waitForAllLoads);
 
-	/* bank functions */
+	/* Bank functions */
 	ClassDB::bind_method(D_METHOD("bank_load", "path_to_bank", "flags"), &Fmod::loadbank);
 	ClassDB::bind_method(D_METHOD("bank_unload", "path_to_bank"), &Fmod::unloadBank);
 	ClassDB::bind_method(D_METHOD("bank_get_loading_state", "path_to_bank"), &Fmod::getBankLoadingState);
@@ -971,7 +1013,10 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("bank_get_string_count", "path_to_bank"), &Fmod::getBankStringCount);
 	ClassDB::bind_method(D_METHOD("bank_get_vca_count", "path_to_bank"), &Fmod::getBankVCACount);
 
-	/* event functions */
+	/* EventDescription functions */
+	ClassDB::bind_method(D_METHOD("event_desc_create_instance", "desc_handle"), &Fmod::createEventFromDesc);
+
+	/* Event functions */
 	ClassDB::bind_method(D_METHOD("event_get_parameter", "id", "parameter_name"), &Fmod::getEventParameter);
 	ClassDB::bind_method(D_METHOD("event_set_parameter", "id", "parameter_name", "value"), &Fmod::setEventParameter);
 	ClassDB::bind_method(D_METHOD("event_release", "id"), &Fmod::releaseEvent);
@@ -991,8 +1036,9 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("event_set_reverb_level", "id", "index", "level"), &Fmod::setEventReverbLevel);
 	ClassDB::bind_method(D_METHOD("event_is_virtual", "id"), &Fmod::isEventVirtual);
 	ClassDB::bind_method(D_METHOD("event_set_callback", "id", "callback_mask"), &Fmod::setCallback);
+	ClassDB::bind_method(D_METHOD("event_get_description", "id"), &Fmod::getEventDescription);
 
-	/* bus functions */
+	/* Bus functions */
 	ClassDB::bind_method(D_METHOD("bus_get_mute", "path_to_bus"), &Fmod::getBusMute);
 	ClassDB::bind_method(D_METHOD("bus_get_paused", "path_to_bus"), &Fmod::getBusPaused);
 	ClassDB::bind_method(D_METHOD("bus_get_volume", "path_to_bus"), &Fmod::getBusVolume);
@@ -1117,7 +1163,7 @@ void Fmod::_bind_methods() {
 	BIND_CONSTANT(FMOD_VIRTUAL_PLAYFROMSTART);
 }
 
-Fmod* Fmod::getSingleton() {
+Fmod *Fmod::getSingleton() {
 	return singleton;
 }
 

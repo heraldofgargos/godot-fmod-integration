@@ -58,10 +58,11 @@ class Fmod : public Object {
 
 	Map<String, FMOD::Studio::Bank *> banks;
 	Map<String, FMOD::Studio::EventDescription *> eventDescriptions;
+	Map<uint64_t, FMOD::Studio::EventDescription *> ptrToEventDescMap;
 	Map<String, FMOD::Studio::Bus *> buses;
 	Map<String, FMOD::Studio::VCA *> VCAs;
 
-	// maintain attached one shot instances
+	// maintain attached instances internally
 	struct AttachedOneShot {
 		FMOD::Studio::EventInstance *instance;
 		Object *gameObj;
@@ -97,6 +98,7 @@ public:
 	void addListener(Object *gameObj);
 	void setSoftwareFormat(int sampleRate, int speakerMode, int numRawSpeakers);
 	void setSound3DSettings(float dopplerScale, float distanceFactor, float rollOffScale);
+	uint64_t getEvent(const String &path);
 	void setGlobalParameter(const String &parameterName, float value);
 	float getGlobalParameter(const String &parameterName);
 	Array getAvailableDrivers();
@@ -128,7 +130,10 @@ public:
 	int getBankStringCount(const String &pathToBank);
 	int getBankVCACount(const String &pathToBank);
 
-	/* EventInstance functions */
+	/* EventDescription functions */
+	uint64_t createEventFromDesc(uint64_t descHandle);
+
+	/* Event functions */
 	float getEventParameter(uint64_t instanceId, const String &parameterName);
 	void setEventParameter(uint64_t instanceId, const String &parameterName, float value);
 	void releaseEvent(uint64_t instanceId);
@@ -148,6 +153,7 @@ public:
 	void setEventReverbLevel(uint64_t instanceId, int index, float level);
 	bool isEventVirtual(uint64_t instanceId);
 	void setCallback(uint64_t instanceId, int callbackMask);
+	uint64_t getEventDescription(uint64_t instanceId);
 
 	/* Bus functions */
 	bool getBusMute(const String &busPath);
