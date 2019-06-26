@@ -31,7 +31,7 @@
 #include "callbacks.h"
 
 void Fmod::init(int numOfChannels, int studioFlags, int flags) {
-	// initialize FMOD Studio and FMOD Low Level System with provided flags
+	// initialize FMOD Studio and FMOD Core System with provided flags
 	if (checkErrors(system->initialize(numOfChannels, studioFlags, flags, nullptr))) {
 		print_line("FMOD Sound System: Successfully initialized");
 		if (studioFlags == FMOD_STUDIO_INIT_LIVEUPDATE)
