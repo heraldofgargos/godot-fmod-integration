@@ -39,8 +39,13 @@ namespace Callbacks {
 Mutex *mut;
 
 struct CallbackInfo {
+	// Maintain callback info for Timeline Markers
 	Dictionary markerCallbackInfo;
+
+	// Maintain callback info for Timeline Beats & Bars
 	Dictionary beatCallbackInfo;
+
+	// Maintain callback info for Sounds played or stopped
 	Dictionary soundCallbackInfo;
 };
 
