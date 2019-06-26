@@ -948,6 +948,7 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("system_get_performance_data"), &Fmod::getPerformanceData);
 
 	/* integration helper functions */
+	ClassDB::bind_method(D_METHOD("create_event_instance", "event_path"), &Fmod::createEventInstance);
 	ClassDB::bind_method(D_METHOD("play_one_shot", "event_name", "node"), &Fmod::playOneShot);
 	ClassDB::bind_method(D_METHOD("play_one_shot_with_params", "event_name", "node", "initial_parameters"), &Fmod::playOneShotWithParams);
 	ClassDB::bind_method(D_METHOD("play_one_shot_attached", "event_name", "node"), &Fmod::playOneShotAttached);
@@ -971,7 +972,6 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("bank_get_vca_count", "path_to_bank"), &Fmod::getBankVCACount);
 
 	/* event functions */
-	ClassDB::bind_method(D_METHOD("event_create_instance", "event_path"), &Fmod::createEventInstance);
 	ClassDB::bind_method(D_METHOD("event_get_parameter", "id", "parameter_name"), &Fmod::getEventParameter);
 	ClassDB::bind_method(D_METHOD("event_set_parameter", "id", "parameter_name", "value"), &Fmod::setEventParameter);
 	ClassDB::bind_method(D_METHOD("event_release", "id"), &Fmod::releaseEvent);

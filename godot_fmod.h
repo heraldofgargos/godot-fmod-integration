@@ -105,6 +105,7 @@ public:
 	Dictionary getPerformanceData();
 
 	/* Helper functions */
+	uint64_t createEventInstance(const String &eventPath);
 	void playOneShot(const String &eventName, Object *gameObj);
 	void playOneShotWithParams(const String &eventName, Object *gameObj, const Dictionary &parameters);
 	void playOneShotAttached(const String &eventName, Object *gameObj);
@@ -128,7 +129,6 @@ public:
 	int getBankVCACount(const String &pathToBank);
 
 	/* EventInstance functions */
-	uint64_t createEventInstance(const String &eventPath);
 	float getEventParameter(uint64_t instanceId, const String &parameterName);
 	void setEventParameter(uint64_t instanceId, const String &parameterName, float value);
 	void releaseEvent(uint64_t instanceId);
