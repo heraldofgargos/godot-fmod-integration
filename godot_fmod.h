@@ -86,6 +86,7 @@ class Fmod : public Object {
 	void runCallbacks();
 
 protected:
+	static Fmod *singleton;
 	static void _bind_methods();
 
 public:
@@ -172,6 +173,8 @@ public:
 	float getSoundVolume(uint64_t instanceId);
 	float getSoundPitch(uint64_t instanceId);
 	void setSoundPitch(uint64_t instanceId, float pitch);
+
+	static Fmod *getSingleton();
 
 	Fmod();
 	~Fmod();

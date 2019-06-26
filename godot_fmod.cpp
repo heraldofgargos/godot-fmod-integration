@@ -30,6 +30,8 @@
 #include "godot_fmod.h"
 #include "callbacks.h"
 
+Fmod *Fmod::singleton = nullptr;
+
 void Fmod::init(int numOfChannels, int studioFlags, int flags) {
 	// initialize FMOD Studio and FMOD Core System with provided flags
 	if (checkErrors(system->initialize(numOfChannels, studioFlags, flags, nullptr))) {
@@ -1115,7 +1117,12 @@ void Fmod::_bind_methods() {
 	BIND_CONSTANT(FMOD_VIRTUAL_PLAYFROMSTART);
 }
 
+Fmod* Fmod::getSingleton() {
+	return singleton;
+}
+
 Fmod::Fmod() {
+	singleton = this;
 	system = nullptr;
 	coreSystem = nullptr;
 	listener = nullptr;
@@ -1125,6 +1132,6 @@ Fmod::Fmod() {
 }
 
 Fmod::~Fmod() {
-	Fmod::shutdown();
 	Callbacks::mut->~Mutex();
+	singleton = nullptr;
 }
