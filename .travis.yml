@@ -74,8 +74,6 @@ install:
   - if [[ "$PLATFORM" == "osx" ]]; then hdiutil attach fmodstudioapi20002osx.dmg; fi
   - if [[ "$PLATFORM" == "windows" ]]; then
     7z x fmodstudioapi20002win-installer.exe;
-    mv api/core/lib/x64/fmod_vc.lib api/core/lib/x64/fmod64_vc.windows.tools.64.lib;
-    mv api/studio/lib/x64/fmodstudio_vc.lib api/studio/lib/x64/fmodstudio64_vc.windows.tools.64.lib;
     fi
   - if [[ "$PLATFORM" == "iphone" ]]; then hdiutil attach fmodstudioapi20002ios.dmg; fi
   - if [[ "$PLATFORM" == "android" ]]; then tar -xvf fmodstudioapi20002android.tar.gz; fi
