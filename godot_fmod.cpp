@@ -306,10 +306,263 @@ int Fmod::getBankVCACount(const String &pathToBank) {
 	return -1;
 }
 
+uint64_t Fmod::descCreateInstance(uint64_t descHandle) {
+	if (!ptrToEventDescMap.has(descHandle)) return 0;
+
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	FMOD::Studio::EventInstance *instance = nullptr;
+	checkErrors(desc->createInstance(&instance));
+	if (instance) {
+		auto ptr = (uint64_t)instance;
+		unmanagedEvents.insert(ptr, instance);
+		return ptr;
+	}
+	return 0;
+}
+
+int Fmod::descGetLength(uint64_t descHandle) {
+	if (!ptrToEventDescMap.has(descHandle)) return -1;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	int length = 0;
+	checkErrors(desc->getLength(&length));
+	return length;
+}
+
+String Fmod::descGetPath(uint64_t descHandle) {
+	if (!ptrToEventDescMap.has(descHandle)) return String("undefined");
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	char path[256];
+	int retrived = 0;
+	checkErrors(desc->getPath(path, 256, &retrived));
+	return String(path);
+}
+
+Array Fmod::descGetInstanceList(uint64_t descHandle) {
+	Array array;
+	if (!ptrToEventDescMap.has(descHandle)) return array;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	FMOD::Studio::EventInstance *arr[128];
+	int count = 0;
+	checkErrors(desc->getInstanceList(arr, 128, &count));
+	for (int i = 0; i < count; i++) {
+		array.append((uint64_t)arr[i]);
+	}
+	return array;
+}
+
+int Fmod::descGetInstanceCount(uint64_t descHandle) {
+	if (!ptrToEventDescMap.has(descHandle)) return -1;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	int count = 0;
+	checkErrors(desc->getInstanceCount(&count));
+	return count;
+}
+
+void Fmod::descReleaseAllInstances(uint64_t descHandle) {
+	if (!ptrToEventDescMap.has(descHandle)) return;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+
+	checkErrors(desc->releaseAllInstances());
+}
+
+void Fmod::descLoadSampleData(uint64_t descHandle) {
+	if (!ptrToEventDescMap.has(descHandle)) return;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	checkErrors(desc->loadSampleData());
+}
+
+void Fmod::descUnloadSampleData(uint64_t descHandle) {
+	if (!ptrToEventDescMap.has(descHandle)) return;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	checkErrors(desc->unloadSampleData());
+}
+
+int Fmod::descGetSampleLoadingState(uint64_t descHandle) {
+	if (!ptrToEventDescMap.has(descHandle)) return -1;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	FMOD_STUDIO_LOADING_STATE s;
+	checkErrors(desc->getSampleLoadingState(&s));
+	return s;
+}
+
+bool Fmod::descIs3D(uint64_t descHandle) {
+	if (!ptrToEventDescMap.has(descHandle)) return false;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	bool is3D = false;
+	checkErrors(desc->is3D(&is3D));
+	return is3D;
+}
+
+bool Fmod::descIsOneShot(uint64_t descHandle) {
+	if (!ptrToEventDescMap.has(descHandle)) return false;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	bool isOneShot = false;
+	checkErrors(desc->isOneshot(&isOneShot));
+	return isOneShot;
+}
+
+bool Fmod::descIsSnapshot(uint64_t descHandle) {
+	if (!ptrToEventDescMap.has(descHandle)) return false;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	bool isSnapshot = false;
+	checkErrors(desc->isSnapshot(&isSnapshot));
+	return isSnapshot;
+}
+
+bool Fmod::descIsStream(uint64_t descHandle) {
+	if (!ptrToEventDescMap.has(descHandle)) return false;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	bool isStream = false;
+	checkErrors(desc->isStream(&isStream));
+	return isStream;
+}
+
+bool Fmod::descHasCue(uint64_t descHandle) {
+	if (!ptrToEventDescMap.has(descHandle)) return false;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	bool hasCue = false;
+	checkErrors(desc->hasCue(&hasCue));
+	return hasCue;
+}
+
+float Fmod::descGetMaximumDistance(uint64_t descHandle) {
+	if (!ptrToEventDescMap.has(descHandle)) return 0.f;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	float maxDist = 0.f;
+	checkErrors(desc->getMaximumDistance(&maxDist));
+	return maxDist;
+}
+
+float Fmod::descGetMinimumDistance(uint64_t descHandle) {
+	if (!ptrToEventDescMap.has(descHandle)) return 0.f;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	float minDist = 0.f;
+	checkErrors(desc->getMinimumDistance(&minDist));
+	return minDist;
+}
+
+float Fmod::descGetSoundSize(uint64_t descHandle) {
+	if (!ptrToEventDescMap.has(descHandle)) return 0.f;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	float soundSize = 0.f;
+	checkErrors(desc->getSoundSize(&soundSize));
+	return soundSize;
+}
+
+Dictionary Fmod::descGetParameterDescriptionByName(uint64_t descHandle, const String &name) {
+	Dictionary paramDesc;
+	if (!ptrToEventDescMap.has(descHandle)) return paramDesc;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+
+	FMOD_STUDIO_PARAMETER_DESCRIPTION pDesc;
+	if (checkErrors(desc->getParameterDescriptionByName(name.ascii().get_data(), &pDesc))) {
+		paramDesc["name"] = String(pDesc.name);
+		paramDesc["id_first"] = pDesc.id.data1;
+		paramDesc["id_second"] = pDesc.id.data2;
+		paramDesc["minimum"] = pDesc.minimum;
+		paramDesc["maximum"] = pDesc.maximum;
+		paramDesc["default_value"] = pDesc.defaultvalue;
+	}
+
+	return paramDesc;
+}
+
+Dictionary Fmod::descGetParameterDescriptionByID(uint64_t descHandle, Array idPair) {
+	Dictionary paramDesc;
+	if (!ptrToEventDescMap.has(descHandle) || idPair.size() != 2) return paramDesc;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	FMOD_STUDIO_PARAMETER_ID paramId;
+	paramId.data1 = (unsigned int)idPair[0];
+	paramId.data2 = (unsigned int)idPair[1];
+	FMOD_STUDIO_PARAMETER_DESCRIPTION pDesc;
+	if (checkErrors(desc->getParameterDescriptionByID(paramId, &pDesc))) {
+		paramDesc["name"] = String(pDesc.name);
+		paramDesc["id_first"] = pDesc.id.data1;
+		paramDesc["id_second"] = pDesc.id.data2;
+		paramDesc["minimum"] = pDesc.minimum;
+		paramDesc["maximum"] = pDesc.maximum;
+		paramDesc["default_value"] = pDesc.defaultvalue;
+	}
+	return paramDesc;
+}
+
+int Fmod::descGetParameterDescriptionCount(uint64_t descHandle) {
+	if (!ptrToEventDescMap.has(descHandle)) return 0;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	int count = 0;
+	checkErrors(desc->getParameterDescriptionCount(&count));
+	return count;
+}
+
+Dictionary Fmod::descGetParameterDescriptionByIndex(uint64_t descHandle, int index) {
+	Dictionary paramDesc;
+	if (!ptrToEventDescMap.has(descHandle)) return paramDesc;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	FMOD_STUDIO_PARAMETER_DESCRIPTION pDesc;
+	if (checkErrors(desc->getParameterDescriptionByIndex(index, &pDesc))) {
+		paramDesc["name"] = String(pDesc.name);
+		paramDesc["id_first"] = pDesc.id.data1;
+		paramDesc["id_second"] = pDesc.id.data2;
+		paramDesc["minimum"] = pDesc.minimum;
+		paramDesc["maximum"] = pDesc.maximum;
+		paramDesc["default_value"] = pDesc.defaultvalue;
+	}
+	return paramDesc;
+}
+
+Dictionary Fmod::descGetUserProperty(uint64_t descHandle, String name) {
+	Dictionary propDesc;
+	if (!ptrToEventDescMap.has(descHandle)) return propDesc;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	FMOD_STUDIO_USER_PROPERTY uProp;
+	if (checkErrors(desc->getUserProperty(name.ascii().get_data(), &uProp))) {
+		FMOD_STUDIO_USER_PROPERTY_TYPE fType = uProp.type;
+		if (fType == FMOD_STUDIO_USER_PROPERTY_TYPE_INTEGER)
+			propDesc[String(uProp.name)] = uProp.intvalue;
+		else if (fType == FMOD_STUDIO_USER_PROPERTY_TYPE_BOOLEAN)
+			propDesc[String(uProp.name)] = (bool)uProp.boolvalue;
+		else if (fType == FMOD_STUDIO_USER_PROPERTY_TYPE_FLOAT)
+			propDesc[String(uProp.name)] = uProp.floatvalue;
+		else if (fType == FMOD_STUDIO_USER_PROPERTY_TYPE_STRING)
+			propDesc[String(uProp.name)] = String(uProp.stringvalue);
+	}
+
+	return propDesc;
+}
+
+int Fmod::descGetUserPropertyCount(uint64_t descHandle) {
+	if (!ptrToEventDescMap.has(descHandle)) return -1;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	int count = 0;
+	checkErrors(desc->getUserPropertyCount(&count));
+	return count;
+}
+
+Dictionary Fmod::descUserPropertyByIndex(uint64_t descHandle, int index) {
+	Dictionary propDesc;
+	if (!ptrToEventDescMap.has(descHandle)) return propDesc;
+	auto desc = ptrToEventDescMap.find(descHandle)->value();
+	FMOD_STUDIO_USER_PROPERTY uProp;
+	if (checkErrors(desc->getUserPropertyByIndex(index, &uProp))) {
+		FMOD_STUDIO_USER_PROPERTY_TYPE fType = uProp.type;
+		if (fType == FMOD_STUDIO_USER_PROPERTY_TYPE_INTEGER)
+			propDesc[String(uProp.name)] = uProp.intvalue;
+		else if (fType == FMOD_STUDIO_USER_PROPERTY_TYPE_BOOLEAN)
+			propDesc[String(uProp.name)] = (bool)uProp.boolvalue;
+		else if (fType == FMOD_STUDIO_USER_PROPERTY_TYPE_FLOAT)
+			propDesc[String(uProp.name)] = uProp.floatvalue;
+		else if (fType == FMOD_STUDIO_USER_PROPERTY_TYPE_STRING)
+			propDesc[String(uProp.name)] = String(uProp.stringvalue);
+	}
+
+	return propDesc;
+}
+
 uint64_t Fmod::createEventInstance(const String &eventPath) {
 	if (!eventDescriptions.has(eventPath)) {
 		FMOD::Studio::EventDescription *desc = nullptr;
-		checkErrors(system->getEvent(eventPath.ascii().get_data(), &desc));
+		auto res = checkErrors(system->getEvent(eventPath.ascii().get_data(), &desc));
+		if (!res) return 0;
 		eventDescriptions.insert(eventPath, desc);
 	}
 	auto desc = eventDescriptions.find(eventPath);
@@ -845,12 +1098,38 @@ void Fmod::setSound3DSettings(float dopplerScale, float distanceFactor, float ro
 	}
 }
 
+uint64_t Fmod::getEvent(const String &path) {
+	if (!eventDescriptions.has(path)) {
+		FMOD::Studio::EventDescription *desc = nullptr;
+		auto res = checkErrors(system->getEvent(path.ascii().get_data(), &desc));
+		if (!res) return 0;
+		eventDescriptions.insert(path, desc);
+	}
+	auto desc = eventDescriptions.find(path)->value();
+	auto ptr = (uint64_t)desc;
+	ptrToEventDescMap.insert(ptr, desc);
+
+	return ptr;
+}
+
 void Fmod::setCallback(uint64_t instanceId, int callbackMask) {
 	if (!unmanagedEvents.has(instanceId)) return;
 	auto i = unmanagedEvents.find(instanceId);
 	if (i->value() && checkErrors(i->value()->setCallback(Callbacks::eventCallback, callbackMask))) {
 		Callbacks::eventCallbacks.insert(instanceId, Callbacks::CallbackInfo());
 	}
+}
+
+uint64_t Fmod::getEventDescription(uint64_t instanceId) {
+	if (!unmanagedEvents.has(instanceId)) return 0;
+
+	auto instance = unmanagedEvents.find(instanceId)->value();
+	FMOD::Studio::EventDescription *desc = nullptr;
+	checkErrors(instance->getDescription(&desc));
+	auto ptr = (uint64_t)desc;
+	ptrToEventDescMap.insert(ptr, desc);
+
+	return ptr;
 }
 
 // runs on the Studio update thread, not the game thread
@@ -933,7 +1212,7 @@ void Fmod::runCallbacks() {
 }
 
 void Fmod::_bind_methods() {
-	/* system functions */
+	/* System functions */
 	ClassDB::bind_method(D_METHOD("system_init", "num_of_channels", "studio_flags", "flags"), &Fmod::init);
 	ClassDB::bind_method(D_METHOD("system_update"), &Fmod::update);
 	ClassDB::bind_method(D_METHOD("system_shutdown"), &Fmod::shutdown);
@@ -946,8 +1225,10 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("system_get_driver"), &Fmod::getDriver);
 	ClassDB::bind_method(D_METHOD("system_set_driver", "id"), &Fmod::setDriver);
 	ClassDB::bind_method(D_METHOD("system_get_performance_data"), &Fmod::getPerformanceData);
+	ClassDB::bind_method(D_METHOD("system_get_event", "path"), &Fmod::getEvent);
 
-	/* integration helper functions */
+	/* Integration helper functions */
+	ClassDB::bind_method(D_METHOD("create_event_instance", "event_path"), &Fmod::createEventInstance);
 	ClassDB::bind_method(D_METHOD("play_one_shot", "event_name", "node"), &Fmod::playOneShot);
 	ClassDB::bind_method(D_METHOD("play_one_shot_with_params", "event_name", "node", "initial_parameters"), &Fmod::playOneShotWithParams);
 	ClassDB::bind_method(D_METHOD("play_one_shot_attached", "event_name", "node"), &Fmod::playOneShotAttached);
@@ -961,7 +1242,7 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("banks_still_loading"), &Fmod::banksStillLoading);
 	ClassDB::bind_method(D_METHOD("wait_for_all_loads"), &Fmod::waitForAllLoads);
 
-	/* bank functions */
+	/* Bank functions */
 	ClassDB::bind_method(D_METHOD("bank_load", "path_to_bank", "flags"), &Fmod::loadbank);
 	ClassDB::bind_method(D_METHOD("bank_unload", "path_to_bank"), &Fmod::unloadBank);
 	ClassDB::bind_method(D_METHOD("bank_get_loading_state", "path_to_bank"), &Fmod::getBankLoadingState);
@@ -970,8 +1251,33 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("bank_get_string_count", "path_to_bank"), &Fmod::getBankStringCount);
 	ClassDB::bind_method(D_METHOD("bank_get_vca_count", "path_to_bank"), &Fmod::getBankVCACount);
 
-	/* event functions */
-	ClassDB::bind_method(D_METHOD("event_create_instance", "event_path"), &Fmod::createEventInstance);
+	/* EventDescription functions */
+	ClassDB::bind_method(D_METHOD("event_desc_create_instance", "desc_handle"), &Fmod::descCreateInstance);
+	ClassDB::bind_method(D_METHOD("event_desc_get_length", "desc_handle"), &Fmod::descGetLength);
+	ClassDB::bind_method(D_METHOD("event_desc_get_path", "desc_handle"), &Fmod::descGetPath);
+	ClassDB::bind_method(D_METHOD("event_desc_get_instance_list", "desc_handle"), &Fmod::descGetInstanceList);
+	ClassDB::bind_method(D_METHOD("event_desc_get_instance_count", "desc_handle"), &Fmod::descGetInstanceCount);
+	ClassDB::bind_method(D_METHOD("event_desc_release_all_instances", "desc_handle"), &Fmod::descReleaseAllInstances);
+	ClassDB::bind_method(D_METHOD("event_desc_load_sample_data", "desc_handle"), &Fmod::descLoadSampleData);
+	ClassDB::bind_method(D_METHOD("event_desc_unload_sample_data", "desc_handle"), &Fmod::descUnloadSampleData);
+	ClassDB::bind_method(D_METHOD("event_desc_get_sample_loading_state", "desc_handle"), &Fmod::descGetSampleLoadingState);
+	ClassDB::bind_method(D_METHOD("event_desc_is_3D", "desc_handle"), &Fmod::descIs3D);
+	ClassDB::bind_method(D_METHOD("event_desc_is_oneshot", "desc_handle"), &Fmod::descIsOneShot);
+	ClassDB::bind_method(D_METHOD("event_desc_is_snapshot", "desc_handle"), &Fmod::descIsSnapshot);
+	ClassDB::bind_method(D_METHOD("event_desc_is_stream", "desc_handle"), &Fmod::descIsStream);
+	ClassDB::bind_method(D_METHOD("event_desc_has_cue", "desc_handle"), &Fmod::descHasCue);
+	ClassDB::bind_method(D_METHOD("event_desc_get_maximum_distance", "desc_handle"), &Fmod::descGetMaximumDistance);
+	ClassDB::bind_method(D_METHOD("event_desc_get_minimum_distance", "desc_handle"), &Fmod::descGetMinimumDistance);
+	ClassDB::bind_method(D_METHOD("event_desc_get_sound_size", "desc_handle"), &Fmod::descGetSoundSize);
+	ClassDB::bind_method(D_METHOD("event_desc_get_parameter_desc_by_name", "desc_handle", "parameter_name"), &Fmod::descGetParameterDescriptionByName);
+	ClassDB::bind_method(D_METHOD("event_desc_get_parameter_desc_by_id", "desc_handle", "id_pair"), &Fmod::descGetParameterDescriptionByID);
+	ClassDB::bind_method(D_METHOD("event_desc_get_parameter_description_count", "desc_handle"), &Fmod::descGetParameterDescriptionCount);
+	ClassDB::bind_method(D_METHOD("event_desc_get_parameter_desc_by_index", "desc_handle", "index"), &Fmod::descGetParameterDescriptionByIndex);
+	ClassDB::bind_method(D_METHOD("event_desc_get_user_property", "desc_handle", "name"), &Fmod::descGetUserProperty);
+	ClassDB::bind_method(D_METHOD("event_desc_get_user_property_count", "desc_handle"), &Fmod::descGetUserPropertyCount);
+	ClassDB::bind_method(D_METHOD("event_desc_get_user_property_by_index", "desc_handle", "index"), &Fmod::descGetParameterDescriptionByIndex);
+
+	/* EventInstance functions */
 	ClassDB::bind_method(D_METHOD("event_get_parameter", "id", "parameter_name"), &Fmod::getEventParameter);
 	ClassDB::bind_method(D_METHOD("event_set_parameter", "id", "parameter_name", "value"), &Fmod::setEventParameter);
 	ClassDB::bind_method(D_METHOD("event_release", "id"), &Fmod::releaseEvent);
@@ -991,8 +1297,9 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("event_set_reverb_level", "id", "index", "level"), &Fmod::setEventReverbLevel);
 	ClassDB::bind_method(D_METHOD("event_is_virtual", "id"), &Fmod::isEventVirtual);
 	ClassDB::bind_method(D_METHOD("event_set_callback", "id", "callback_mask"), &Fmod::setCallback);
+	ClassDB::bind_method(D_METHOD("event_get_description", "id"), &Fmod::getEventDescription);
 
-	/* bus functions */
+	/* Bus functions */
 	ClassDB::bind_method(D_METHOD("bus_get_mute", "path_to_bus"), &Fmod::getBusMute);
 	ClassDB::bind_method(D_METHOD("bus_get_paused", "path_to_bus"), &Fmod::getBusPaused);
 	ClassDB::bind_method(D_METHOD("bus_get_volume", "path_to_bus"), &Fmod::getBusVolume);
@@ -1055,6 +1362,7 @@ void Fmod::_bind_methods() {
 	BIND_CONSTANT(FMOD_STUDIO_LOADING_STATE_LOADING);
 	BIND_CONSTANT(FMOD_STUDIO_LOADING_STATE_LOADED);
 	BIND_CONSTANT(FMOD_STUDIO_LOADING_STATE_ERROR);
+	BIND_CONSTANT(FMOD_STUDIO_LOADING_STATE_UNLOADED);
 
 	/* FMOD_STUDIO_PLAYBACK_STATE */
 	BIND_CONSTANT(FMOD_STUDIO_PLAYBACK_PLAYING);
@@ -1117,7 +1425,7 @@ void Fmod::_bind_methods() {
 	BIND_CONSTANT(FMOD_VIRTUAL_PLAYFROMSTART);
 }
 
-Fmod* Fmod::getSingleton() {
+Fmod *Fmod::getSingleton() {
 	return singleton;
 }
 

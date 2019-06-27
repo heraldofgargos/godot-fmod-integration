@@ -58,10 +58,11 @@ class Fmod : public Object {
 
 	Map<String, FMOD::Studio::Bank *> banks;
 	Map<String, FMOD::Studio::EventDescription *> eventDescriptions;
+	Map<uint64_t, FMOD::Studio::EventDescription *> ptrToEventDescMap;
 	Map<String, FMOD::Studio::Bus *> buses;
 	Map<String, FMOD::Studio::VCA *> VCAs;
 
-	// maintain attached one shot instances
+	// maintain attached instances internally
 	struct AttachedOneShot {
 		FMOD::Studio::EventInstance *instance;
 		Object *gameObj;
@@ -97,6 +98,7 @@ public:
 	void addListener(Object *gameObj);
 	void setSoftwareFormat(int sampleRate, int speakerMode, int numRawSpeakers);
 	void setSound3DSettings(float dopplerScale, float distanceFactor, float rollOffScale);
+	uint64_t getEvent(const String &path);
 	void setGlobalParameter(const String &parameterName, float value);
 	float getGlobalParameter(const String &parameterName);
 	Array getAvailableDrivers();
@@ -105,6 +107,7 @@ public:
 	Dictionary getPerformanceData();
 
 	/* Helper functions */
+	uint64_t createEventInstance(const String &eventPath);
 	void playOneShot(const String &eventName, Object *gameObj);
 	void playOneShotWithParams(const String &eventName, Object *gameObj, const Dictionary &parameters);
 	void playOneShotAttached(const String &eventName, Object *gameObj);
@@ -127,8 +130,33 @@ public:
 	int getBankStringCount(const String &pathToBank);
 	int getBankVCACount(const String &pathToBank);
 
+	/* EventDescription functions */
+	uint64_t descCreateInstance(uint64_t descHandle);
+	int descGetLength(uint64_t descHandle);
+	String descGetPath(uint64_t descHandle);
+	Array descGetInstanceList(uint64_t descHandle);
+	int descGetInstanceCount(uint64_t descHandle);
+	void descReleaseAllInstances(uint64_t descHandle);
+	void descLoadSampleData(uint64_t descHandle);
+	void descUnloadSampleData(uint64_t descHandle);
+	int descGetSampleLoadingState(uint64_t descHandle);
+	bool descIs3D(uint64_t descHandle);
+	bool descIsOneShot(uint64_t descHandle);
+	bool descIsSnapshot(uint64_t descHandle);
+	bool descIsStream(uint64_t descHandle);
+	bool descHasCue(uint64_t descHandle);
+	float descGetMaximumDistance(uint64_t descHandle);
+	float descGetMinimumDistance(uint64_t descHandle);
+	float descGetSoundSize(uint64_t descHandle);
+	Dictionary descGetParameterDescriptionByName(uint64_t descHandle, const String &name);
+	Dictionary descGetParameterDescriptionByID(uint64_t descHandle, Array idPair);
+	int descGetParameterDescriptionCount(uint64_t descHandle);
+	Dictionary descGetParameterDescriptionByIndex(uint64_t descHandle, int index);
+	Dictionary descGetUserProperty(uint64_t descHandle, String name);
+	int descGetUserPropertyCount(uint64_t descHandle);
+	Dictionary descUserPropertyByIndex(uint64_t descHandle, int index);
+
 	/* EventInstance functions */
-	uint64_t createEventInstance(const String &eventPath);
 	float getEventParameter(uint64_t instanceId, const String &parameterName);
 	void setEventParameter(uint64_t instanceId, const String &parameterName, float value);
 	void releaseEvent(uint64_t instanceId);
@@ -148,6 +176,7 @@ public:
 	void setEventReverbLevel(uint64_t instanceId, int index, float level);
 	bool isEventVirtual(uint64_t instanceId);
 	void setCallback(uint64_t instanceId, int callbackMask);
+	uint64_t getEventDescription(uint64_t instanceId);
 
 	/* Bus functions */
 	bool getBusMute(const String &busPath);
