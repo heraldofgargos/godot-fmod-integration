@@ -83,7 +83,7 @@ void Fmod::updateInstance3DAttributes(FMOD::Studio::EventInstance *instance, Obj
 			Transform2D t2d = ci->get_transform();
 			Vector2 posVector = t2d.get_origin() / distanceScale;
 			// in 2D, the distance is measured in pixels
-			// TODO: Revise the set3DAttributes call. In 2D, the emitters must directly face the listener. 
+			// TODO: Revise the set3DAttributes call. In 2D, the emitters must directly face the listener.
 			Vector3 pos(posVector.x, 0.0f, posVector.y),
 					up(0, 1, 0), forward(0, 0, 1), vel(0, 0, 0); // TODO: add doppler
 			FMOD_3D_ATTRIBUTES attr = get3DAttributes(toFmodVector(pos), toFmodVector(up), toFmodVector(forward), toFmodVector(vel));
@@ -121,7 +121,7 @@ void Fmod::setListenerAttributes() {
 		Vector2 posVector = t2d.get_origin() / distanceScale;
 		// in 2D, the distance is measured in pixels
 		// TODO: Revise the set3DAttributes call. In 2D, the listener must be a few units away from
-		// the emitters (or the screen) and must face them directly. 
+		// the emitters (or the screen) and must face them directly.
 		Vector3 pos(posVector.x, 0.0f, posVector.y),
 				up(0, 1, 0), forward(0, 0, 1), vel(0, 0, 0); // TODO: add doppler
 		FMOD_3D_ATTRIBUTES attr = get3DAttributes(toFmodVector(pos), toFmodVector(up), toFmodVector(forward), toFmodVector(vel));
