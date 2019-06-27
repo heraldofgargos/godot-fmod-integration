@@ -131,9 +131,32 @@ public:
 	int getBankVCACount(const String &pathToBank);
 
 	/* EventDescription functions */
-	uint64_t createEventFromDesc(uint64_t descHandle);
+	uint64_t descCreateInstance(uint64_t descHandle);
+	int descGetLength(uint64_t descHandle);
+	String descGetPath(uint64_t descHandle);
+	Array descGetInstanceList(uint64_t descHandle);
+	int descGetInstanceCount(uint64_t descHandle);
+	void descReleaseAllInstances(uint64_t descHandle);
+	void descLoadSampleData(uint64_t descHandle);
+	void descUnloadSampleData(uint64_t descHandle);
+	int descGetSampleLoadingState(uint64_t descHandle);
+	bool descIs3D(uint64_t descHandle);
+	bool descIsOneShot(uint64_t descHandle);
+	bool descIsSnapshot(uint64_t descHandle);
+	bool descIsStream(uint64_t descHandle);
+	bool descHasCue(uint64_t descHandle);
+	float descGetMaximumDistance(uint64_t descHandle);
+	float descGetMinimumDistance(uint64_t descHandle);
+	float descGetSoundSize(uint64_t descHandle);
+	Dictionary descGetParameterDescriptionByName(uint64_t descHandle, const String &name);
+	Dictionary descGetParameterDescriptionByID(uint64_t descHandle, Array idPair);
+	int descGetParameterDescriptionCount(uint64_t descHandle);
+	Dictionary descGetParameterDescriptionByIndex(uint64_t descHandle, int index);
+	Dictionary descGetUserProperty(uint64_t descHandle, String name);
+	int descGetUserPropertyCount(uint64_t descHandle);
+	Dictionary descUserPropertyByIndex(uint64_t descHandle, int index);
 
-	/* Event functions */
+	/* EventInstance functions */
 	float getEventParameter(uint64_t instanceId, const String &parameterName);
 	void setEventParameter(uint64_t instanceId, const String &parameterName, float value);
 	void releaseEvent(uint64_t instanceId);
