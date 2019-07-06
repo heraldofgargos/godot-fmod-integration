@@ -58,13 +58,11 @@ class Fmod : public Object {
 
 	Map<String, FMOD::Studio::Bank *> banks;
 	Map<String, FMOD::Studio::EventDescription *> eventDescriptions;
+	Map<uint64_t, FMOD::Studio::EventDescription *> ptrToEventDescMap;
 	Map<String, FMOD::Studio::Bus *> buses;
 	Map<String, FMOD::Studio::VCA *> VCAs;
-	Map<uint64_t, FMOD::Sound *> sounds;
-	Map<FMOD::Sound *, FMOD::Channel *> channels;
 
-	// keep track of one shot instances internally
-	Vector<FMOD::Studio::EventInstance *> oneShotInstances;
+	// maintain attached instances internally
 	struct AttachedOneShot {
 		FMOD::Studio::EventInstance *instance;
 		Object *gameObj;
@@ -73,6 +71,10 @@ class Fmod : public Object {
 
 	// events not directly managed by the integration
 	Map<uint64_t, FMOD::Studio::EventInstance *> unmanagedEvents;
+
+	// for playing sounds using FMOD Core / Low Level
+	Map<uint64_t, FMOD::Sound *> sounds;
+	Map<FMOD::Sound *, FMOD::Channel *> channels;
 
 	FMOD_3D_ATTRIBUTES get3DAttributes(FMOD_VECTOR pos, FMOD_VECTOR up, FMOD_VECTOR forward, FMOD_VECTOR vel);
 	FMOD_VECTOR toFmodVector(Vector3 vec);
@@ -85,16 +87,18 @@ class Fmod : public Object {
 	void runCallbacks();
 
 protected:
+	static Fmod *singleton;
 	static void _bind_methods();
 
 public:
-	/* system functions */
+	/* System functions */
 	void init(int numOfChannels, int studioFlags, int flags);
 	void update();
 	void shutdown();
 	void addListener(Object *gameObj);
 	void setSoftwareFormat(int sampleRate, int speakerMode, int numRawSpeakers);
 	void setSound3DSettings(float dopplerScale, float distanceFactor, float rollOffScale);
+	uint64_t getEvent(const String &path);
 	void setGlobalParameter(const String &parameterName, float value);
 	float getGlobalParameter(const String &parameterName);
 	Array getAvailableDrivers();
@@ -102,7 +106,8 @@ public:
 	void setDriver(int id);
 	Dictionary getPerformanceData();
 
-	/* helper functions */
+	/* Helper functions */
+	uint64_t createEventInstance(const String &eventPath);
 	void playOneShot(const String &eventName, Object *gameObj);
 	void playOneShotWithParams(const String &eventName, Object *gameObj, const Dictionary &parameters);
 	void playOneShotAttached(const String &eventName, Object *gameObj);
@@ -116,7 +121,7 @@ public:
 	bool banksStillLoading();
 	void waitForAllLoads();
 
-	/* bank functions */
+	/* Bank functions */
 	String loadbank(const String &pathToBank, int flags);
 	void unloadBank(const String &pathToBank);
 	int getBankLoadingState(const String &pathToBank);
@@ -125,8 +130,33 @@ public:
 	int getBankStringCount(const String &pathToBank);
 	int getBankVCACount(const String &pathToBank);
 
-	/* event functions */
-	uint64_t createEventInstance(const String &eventPath);
+	/* EventDescription functions */
+	uint64_t descCreateInstance(uint64_t descHandle);
+	int descGetLength(uint64_t descHandle);
+	String descGetPath(uint64_t descHandle);
+	Array descGetInstanceList(uint64_t descHandle);
+	int descGetInstanceCount(uint64_t descHandle);
+	void descReleaseAllInstances(uint64_t descHandle);
+	void descLoadSampleData(uint64_t descHandle);
+	void descUnloadSampleData(uint64_t descHandle);
+	int descGetSampleLoadingState(uint64_t descHandle);
+	bool descIs3D(uint64_t descHandle);
+	bool descIsOneShot(uint64_t descHandle);
+	bool descIsSnapshot(uint64_t descHandle);
+	bool descIsStream(uint64_t descHandle);
+	bool descHasCue(uint64_t descHandle);
+	float descGetMaximumDistance(uint64_t descHandle);
+	float descGetMinimumDistance(uint64_t descHandle);
+	float descGetSoundSize(uint64_t descHandle);
+	Dictionary descGetParameterDescriptionByName(uint64_t descHandle, const String &name);
+	Dictionary descGetParameterDescriptionByID(uint64_t descHandle, Array idPair);
+	int descGetParameterDescriptionCount(uint64_t descHandle);
+	Dictionary descGetParameterDescriptionByIndex(uint64_t descHandle, int index);
+	Dictionary descGetUserProperty(uint64_t descHandle, String name);
+	int descGetUserPropertyCount(uint64_t descHandle);
+	Dictionary descUserPropertyByIndex(uint64_t descHandle, int index);
+
+	/* EventInstance functions */
 	float getEventParameter(uint64_t instanceId, const String &parameterName);
 	void setEventParameter(uint64_t instanceId, const String &parameterName, float value);
 	void releaseEvent(uint64_t instanceId);
@@ -146,8 +176,9 @@ public:
 	void setEventReverbLevel(uint64_t instanceId, int index, float level);
 	bool isEventVirtual(uint64_t instanceId);
 	void setCallback(uint64_t instanceId, int callbackMask);
+	uint64_t getEventDescription(uint64_t instanceId);
 
-	/* bus functions */
+	/* Bus functions */
 	bool getBusMute(const String &busPath);
 	bool getBusPaused(const String &busPath);
 	float getBusVolume(const String &busPath);
@@ -160,7 +191,7 @@ public:
 	float getVCAVolume(const String &VCAPath);
 	void setVCAVolume(const String &VCAPath, float volume);
 
-	/* Sound functions */
+	/* FMOD Core Sound functions */
 	void playSound(uint64_t instanceId);
 	uint64_t loadSound(const String &path, int mode);
 	void releaseSound(uint64_t instanceId);
@@ -171,6 +202,8 @@ public:
 	float getSoundVolume(uint64_t instanceId);
 	float getSoundPitch(uint64_t instanceId);
 	void setSoundPitch(uint64_t instanceId, float pitch);
+
+	static Fmod *getSingleton();
 
 	Fmod();
 	~Fmod();
