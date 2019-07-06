@@ -45,14 +45,14 @@ void Fmod::update() {
 	for (auto e = events.front(); e; e = e->next()) {
 		FMOD::Studio::EventInstance *eventInstance = e->get();
         EventInfo *eventInfo = getEventInfo(eventInstance);
-        if (eventInfo->gameObj && isNull(eventInfo->gameObj)) {
-            FMOD_STUDIO_STOP_MODE m = FMOD_STUDIO_STOP_IMMEDIATE;
-            checkErrors(eventInstance->stop(m));
-            releaseOneEvent(eventInstance);
-            continue;
-        }
-        else {
-            updateInstance3DAttributes(eventInstance, eventInfo->gameObj);
+        if (eventInfo->gameObj) {
+			if (isNull(eventInfo->gameObj)) {
+				FMOD_STUDIO_STOP_MODE m = FMOD_STUDIO_STOP_IMMEDIATE;
+				checkErrors(eventInstance->stop(m));
+				releaseOneEvent(eventInstance);
+				continue;
+			}
+			updateInstance3DAttributes(eventInstance, eventInfo->gameObj);
         }
     }
 
@@ -298,7 +298,7 @@ int Fmod::getBankVCACount(const String &pathToBank) {
 }
 
 uint64_t Fmod::createEventInstance(const String &eventPath) {
-	FMOD::Studio::EventInstance *instance = createInstance(eventPath, false, false, nullptr);
+	FMOD::Studio::EventInstance *instance = createInstance(eventPath, false, nullptr);
 	if (instance) {
 		uint64_t instanceId = (uint64_t)instance;
 		events.insert(instanceId, instance);
@@ -307,8 +307,7 @@ uint64_t Fmod::createEventInstance(const String &eventPath) {
 	return 0;
 }
 
-FMOD::Studio::EventInstance *Fmod::createInstance(const String eventPath, const bool isOneShot, 
-const bool isAttached, Object *gameObject) {
+FMOD::Studio::EventInstance *Fmod::createInstance(const String eventPath, const bool isOneShot, Object *gameObject) {
 	if (!eventDescriptions.has(eventPath)) {
 		FMOD::Studio::EventDescription *desc = nullptr;
 		checkErrors(system->getEvent(eventPath.ascii().get_data(), &desc));
@@ -317,7 +316,7 @@ const bool isAttached, Object *gameObject) {
 	auto desc = eventDescriptions.find(eventPath);
 	FMOD::Studio::EventInstance *instance;
 	checkErrors(desc->value()->createInstance(&instance));
-	if (instance && !isOneShot) {
+	if (instance && (!isOneShot || gameObject)) {
         auto *eventInfo = new EventInfo();
         eventInfo->gameObj = gameObject;
         instance->setUserData(eventInfo);
@@ -590,7 +589,7 @@ FMOD_3D_ATTRIBUTES Fmod::get3DAttributes(FMOD_VECTOR pos, FMOD_VECTOR up, FMOD_V
 }
 
 void Fmod::playOneShot(const String &eventName, Object *gameObj) {
-	FMOD::Studio::EventInstance *instance = createInstance(eventName, true, false, nullptr);
+	FMOD::Studio::EventInstance *instance = createInstance(eventName, true, nullptr);
     if (instance) {
         // set 3D attributes once
         if (!isNull(gameObj)) {
@@ -602,7 +601,7 @@ void Fmod::playOneShot(const String &eventName, Object *gameObj) {
 }
 
 void Fmod::playOneShotWithParams(const String &eventName, Object *gameObj, const Dictionary &parameters) {
-	FMOD::Studio::EventInstance *instance = createInstance(eventName, true, false, nullptr);
+	FMOD::Studio::EventInstance *instance = createInstance(eventName, true, nullptr);
     if (instance) {
         // set 3D attributes once
         if (!isNull(gameObj)) {
@@ -622,7 +621,7 @@ void Fmod::playOneShotWithParams(const String &eventName, Object *gameObj, const
 
 void Fmod::playOneShotAttached(const String &eventName, Object *gameObj) {
 	if (!isNull(gameObj)) {
-        FMOD::Studio::EventInstance *instance = createInstance(eventName, true, true, gameObj);
+        FMOD::Studio::EventInstance *instance = createInstance(eventName, true, gameObj);
         if (instance) {
             checkErrors(instance->start());
         }
@@ -632,7 +631,7 @@ void Fmod::playOneShotAttached(const String &eventName, Object *gameObj) {
 
 void Fmod::playOneShotAttachedWithParams(const String &eventName, Object *gameObj, const Dictionary &parameters) {
 	if (!isNull(gameObj)) {
-        FMOD::Studio::EventInstance *instance = createInstance(eventName, true, true, gameObj);
+        FMOD::Studio::EventInstance *instance = createInstance(eventName, true, gameObj);
         if (instance) {
             // set the initial parameter values
             auto keys = parameters.keys();
@@ -853,6 +852,11 @@ FMOD_RESULT F_CALLBACK Callbacks::eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE 
 	auto instanceId = (uint64_t)instance;
 	Fmod::EventInfo *eventInfo;
 	mut->lock();
+	//chack if instance is still valid
+	if (!instance) {
+		mut->unlock();
+		return FMOD_OK;
+	}
     instance->getUserData((void **)&eventInfo);
 	if (eventInfo) {
 		Callbacks::CallbackInfo callbackInfo = eventInfo->callbackInfo;

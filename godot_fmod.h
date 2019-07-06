@@ -87,7 +87,7 @@ private:
 	void loadBus(const String &busPath);
 	void loadVCA(const String &VCAPath);
 	void runCallbacks();
-	FMOD::Studio::EventInstance *createInstance(String eventPath, bool isOneShot, bool isAttached, Object *gameObject);
+	FMOD::Studio::EventInstance *createInstance(String eventPath, bool isOneShot, Object *gameObject);
 	EventInfo *getEventInfo(FMOD::Studio::EventInstance *eventInstance);
 	void releaseOneEvent(FMOD::Studio::EventInstance *eventInstance);
 
