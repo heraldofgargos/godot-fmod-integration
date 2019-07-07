@@ -28,8 +28,7 @@ Start playing sounds in just 5 lines of GDScript!
 extends Node
 
 func _ready():
-	# set up FMOD
-	Fmod.system_set_software_format(0, Fmod.FMOD_SPEAKERMODE_STEREO, 0)
+	# initialize FMOD
 	# initializing with the LIVE_UPDATE flag lets you
 	# connect to Godot from the FMOD Studio editor
 	# and author events in realtime
