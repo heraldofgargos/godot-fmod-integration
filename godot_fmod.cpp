@@ -28,7 +28,8 @@
 /*************************************************************************/
 
 #include "godot_fmod.h"
-#include "callbacks.h"
+
+Mutex *Callbacks::mut;
 
 Fmod *Fmod::singleton = nullptr;
 
@@ -43,26 +44,18 @@ void Fmod::init(int numOfChannels, int studioFlags, int flags) {
 }
 
 void Fmod::update() {
-	// update and clean up attached one shots
-	for (int i = 0; i < attachedOneShots.size(); i++) {
-		auto aShot = attachedOneShots.get(i);
-		if (isNull(aShot.gameObj)) { // GameObject has been freed
-			FMOD_STUDIO_STOP_MODE m = FMOD_STUDIO_STOP_IMMEDIATE;
-			checkErrors(aShot.instance->stop(m));
-			checkErrors(aShot.instance->release());
-			attachedOneShots.remove(i);
-			i--;
-			continue;
+	for (auto e = events.front(); e; e = e->next()) {
+		FMOD::Studio::EventInstance *eventInstance = e->get();
+		EventInfo *eventInfo = getEventInfo(eventInstance);
+		if (eventInfo->gameObj) {
+			if (isNull(eventInfo->gameObj)) {
+				FMOD_STUDIO_STOP_MODE m = FMOD_STUDIO_STOP_IMMEDIATE;
+				checkErrors(eventInstance->stop(m));
+				releaseOneEvent(eventInstance);
+				continue;
+			}
+			updateInstance3DAttributes(eventInstance, eventInfo->gameObj);
 		}
-		FMOD_STUDIO_PLAYBACK_STATE s;
-		checkErrors(aShot.instance->getPlaybackState(&s));
-		if (s == FMOD_STUDIO_PLAYBACK_STOPPED) { // one shot has finished playing to a completion
-			checkErrors(aShot.instance->release());
-			attachedOneShots.remove(i);
-			i--;
-			continue;
-		}
-		updateInstance3DAttributes(aShot.instance, aShot.gameObj);
 	}
 
 	// update listener position
@@ -315,7 +308,7 @@ uint64_t Fmod::descCreateInstance(uint64_t descHandle) {
 	checkErrors(desc->createInstance(&instance));
 	if (instance) {
 		auto ptr = (uint64_t)instance;
-		unmanagedEvents.insert(ptr, instance);
+		events.insert(ptr, instance);
 		return ptr;
 	}
 	return 0;
@@ -560,6 +553,16 @@ Dictionary Fmod::descUserPropertyByIndex(uint64_t descHandle, int index) {
 }
 
 uint64_t Fmod::createEventInstance(const String &eventPath) {
+	FMOD::Studio::EventInstance *instance = createInstance(eventPath, false, nullptr);
+	if (instance) {
+		uint64_t instanceId = (uint64_t)instance;
+		events.insert(instanceId, instance);
+		return instanceId;
+	}
+	return 0;
+}
+
+FMOD::Studio::EventInstance *Fmod::createInstance(const String eventPath, const bool isOneShot, Object *gameObject) {
 	if (!eventDescriptions.has(eventPath)) {
 		FMOD::Studio::EventDescription *desc = nullptr;
 		auto res = checkErrors(system->getEvent(eventPath.ascii().get_data(), &desc));
@@ -569,47 +572,59 @@ uint64_t Fmod::createEventInstance(const String &eventPath) {
 	auto desc = eventDescriptions.find(eventPath);
 	FMOD::Studio::EventInstance *instance;
 	checkErrors(desc->value()->createInstance(&instance));
-	if (instance) {
-		uint64_t instanceId = (uint64_t)instance;
-		unmanagedEvents.insert(instanceId, instance);
-		return instanceId;
+	if (instance && (!isOneShot || gameObject)) {
+		auto *eventInfo = new EventInfo();
+		eventInfo->gameObj = gameObject;
+		instance->setUserData(eventInfo);
+		auto instanceId = (uint64_t)instance;
+		events[instanceId] = instance;
 	}
-	return 0;
+	return instance;
 }
 
 float Fmod::getEventParameter(uint64_t instanceId, const String &parameterName) {
 	float p = -1;
-	if (!unmanagedEvents.has(instanceId)) return p;
-	auto i = unmanagedEvents.find(instanceId);
+	if (!events.has(instanceId)) return p;
+	auto i = events.find(instanceId);
 	if (i->value())
 		checkErrors(i->value()->getParameterByName(parameterName.ascii().get_data(), &p));
 	return p;
 }
 
 void Fmod::setEventParameter(uint64_t instanceId, const String &parameterName, float value) {
-	if (!unmanagedEvents.has(instanceId)) return;
-	auto i = unmanagedEvents.find(instanceId);
+	if (!events.has(instanceId)) return;
+	auto i = events.find(instanceId);
 	if (i->value()) checkErrors(i->value()->setParameterByName(parameterName.ascii().get_data(), value));
 }
 
 void Fmod::releaseEvent(uint64_t instanceId) {
-	if (!unmanagedEvents.has(instanceId)) return;
-	auto i = unmanagedEvents.find(instanceId);
-	if (i->value()) {
-		checkErrors(i->value()->release());
-		unmanagedEvents.erase(instanceId);
+	if (!events.has(instanceId)) return;
+	auto i = events.find(instanceId);
+	FMOD::Studio::EventInstance *event = i->value();
+	if (event) {
+		releaseOneEvent(event);
 	}
 }
 
+void Fmod::releaseOneEvent(FMOD::Studio::EventInstance *eventInstance) {
+	Callbacks::mut->lock();
+	EventInfo *eventInfo = getEventInfo(eventInstance);
+	eventInstance->setUserData(nullptr);
+	events.erase((uint64_t)eventInstance);
+	checkErrors(eventInstance->release());
+	delete &eventInfo;
+	Callbacks::mut->unlock();
+}
+
 void Fmod::startEvent(uint64_t instanceId) {
-	if (!unmanagedEvents.has(instanceId)) return;
-	auto i = unmanagedEvents.find(instanceId);
+	if (!events.has(instanceId)) return;
+	auto i = events.find(instanceId);
 	if (i->value()) checkErrors(i->value()->start());
 }
 
 void Fmod::stopEvent(uint64_t instanceId, int stopMode) {
-	if (!unmanagedEvents.has(instanceId)) return;
-	auto i = unmanagedEvents.find(instanceId);
+	if (!events.has(instanceId)) return;
+	auto i = events.find(instanceId);
 	if (i->value()) {
 		auto m = static_cast<FMOD_STUDIO_STOP_MODE>(stopMode);
 		checkErrors(i->value()->stop(m));
@@ -617,16 +632,16 @@ void Fmod::stopEvent(uint64_t instanceId, int stopMode) {
 }
 
 void Fmod::triggerEventCue(uint64_t instanceId) {
-	if (!unmanagedEvents.has(instanceId)) return;
-	auto i = unmanagedEvents.find(instanceId);
+	if (!events.has(instanceId)) return;
+	auto i = events.find(instanceId);
 	if (i->value()) checkErrors(i->value()->triggerCue());
 }
 
 int Fmod::getEventPlaybackState(uint64_t instanceId) {
-	if (!unmanagedEvents.has(instanceId))
+	if (!events.has(instanceId))
 		return -1;
 	else {
-		auto i = unmanagedEvents.find(instanceId);
+		auto i = events.find(instanceId);
 		if (i->value()) {
 			FMOD_STUDIO_PLAYBACK_STATE s;
 			checkErrors(i->value()->getPlaybackState(&s));
@@ -637,78 +652,80 @@ int Fmod::getEventPlaybackState(uint64_t instanceId) {
 }
 
 bool Fmod::getEventPaused(uint64_t instanceId) {
-	if (!unmanagedEvents.has(instanceId)) return false;
-	auto i = unmanagedEvents.find(instanceId);
+	if (!events.has(instanceId)) return false;
+	auto i = events.find(instanceId);
 	bool paused = false;
 	if (i->value()) checkErrors(i->value()->getPaused(&paused));
 	return paused;
 }
 
 void Fmod::setEventPaused(uint64_t instanceId, bool paused) {
-	if (!unmanagedEvents.has(instanceId)) return;
-	auto i = unmanagedEvents.find(instanceId);
+	if (!events.has(instanceId)) return;
+	auto i = events.find(instanceId);
 	if (i->value()) checkErrors(i->value()->setPaused(paused));
 }
 
 float Fmod::getEventPitch(uint64_t instanceId) {
-	if (!unmanagedEvents.has(instanceId)) return 0.0f;
-	auto i = unmanagedEvents.find(instanceId);
+	if (!events.has(instanceId)) return 0.0f;
+	auto i = events.find(instanceId);
 	float pitch = 0.0f;
 	if (i->value()) checkErrors(i->value()->getPitch(&pitch));
 	return pitch;
 }
 
 void Fmod::setEventPitch(uint64_t instanceId, float pitch) {
-	if (!unmanagedEvents.has(instanceId)) return;
-	auto i = unmanagedEvents.find(instanceId);
+	if (!events.has(instanceId)) return;
+	auto i = events.find(instanceId);
 	if (i->value()) checkErrors(i->value()->setPitch(pitch));
 }
 
 float Fmod::getEventVolume(uint64_t instanceId) {
-	if (!unmanagedEvents.has(instanceId)) return 0.0f;
-	auto i = unmanagedEvents.find(instanceId);
+	if (!events.has(instanceId)) return 0.0f;
+	auto i = events.find(instanceId);
 	float volume = 0.0f;
-	if (i->value()) checkErrors(i->value()->getVolume(&volume));
+	FMOD::Studio::EventInstance *event = i->value();
+	checkErrors(event->getVolume(&volume));
 	return volume;
 }
 
 void Fmod::setEventVolume(uint64_t instanceId, float volume) {
-	if (!unmanagedEvents.has(instanceId)) return;
-	auto i = unmanagedEvents.find(instanceId);
-	if (i->value()) checkErrors(i->value()->setVolume(volume));
+	if (!events.has(instanceId)) return;
+	auto i = events.find(instanceId);
+	FMOD::Studio::EventInstance *event = i->value();
+	checkErrors(event->setVolume(volume));
 }
 
 int Fmod::getEventTimelinePosition(uint64_t instanceId) {
-	if (!unmanagedEvents.has(instanceId)) return 0;
-	auto i = unmanagedEvents.find(instanceId);
+	if (!events.has(instanceId)) return 0;
+	auto i = events.find(instanceId);
 	int tp = 0;
 	if (i->value()) checkErrors(i->value()->getTimelinePosition(&tp));
 	return tp;
 }
 
 void Fmod::setEventTimelinePosition(uint64_t instanceId, int position) {
-	if (!unmanagedEvents.has(instanceId)) return;
-	auto i = unmanagedEvents.find(instanceId);
+	if (!events.has(instanceId)) return;
+	auto i = events.find(instanceId);
 	if (i->value()) checkErrors(i->value()->setTimelinePosition(position));
 }
 
 float Fmod::getEventReverbLevel(uint64_t instanceId, int index) {
-	if (!unmanagedEvents.has(instanceId)) return 0.0f;
-	auto i = unmanagedEvents.find(instanceId);
+	if (!events.has(instanceId)) return 0.0f;
+	auto i = events.find(instanceId);
 	float rvl = 0.0f;
 	if (i->value()) checkErrors(i->value()->getReverbLevel(index, &rvl));
 	return rvl;
 }
 
 void Fmod::setEventReverbLevel(uint64_t instanceId, int index, float level) {
-	if (!unmanagedEvents.has(instanceId)) return;
-	auto i = unmanagedEvents.find(instanceId);
+	if (!events.has(instanceId)) return;
+	auto i = events.find(instanceId);
 	if (i->value()) checkErrors(i->value()->setReverbLevel(index, level));
 }
 
 bool Fmod::isEventVirtual(uint64_t instanceId) {
-	if (!unmanagedEvents.has(instanceId)) return false;
-	auto i = unmanagedEvents.find(instanceId);
+	if (!events.has(instanceId)) return false;
+	auto i = events.find(instanceId);
 	bool v = false;
 	if (i->value()) checkErrors(i->value()->isVirtual(&v));
 	return v;
@@ -788,6 +805,12 @@ bool Fmod::isNull(Object *o) {
 	return false; // all g.
 }
 
+Fmod::EventInfo *Fmod::getEventInfo(FMOD::Studio::EventInstance *eventInstance) {
+	EventInfo *eventInfo;
+	eventInstance->getUserData((void **)&eventInfo);
+	return eventInfo;
+}
+
 void Fmod::loadBus(const String &busPath) {
 	if (!buses.has(busPath)) {
 		FMOD::Studio::Bus *b = nullptr;
@@ -822,14 +845,7 @@ FMOD_3D_ATTRIBUTES Fmod::get3DAttributes(FMOD_VECTOR pos, FMOD_VECTOR up, FMOD_V
 }
 
 void Fmod::playOneShot(const String &eventName, Object *gameObj) {
-	if (!eventDescriptions.has(eventName)) {
-		FMOD::Studio::EventDescription *desc = nullptr;
-		checkErrors(system->getEvent(eventName.ascii().get_data(), &desc));
-		eventDescriptions.insert(eventName, desc);
-	}
-	auto desc = eventDescriptions.find(eventName);
-	FMOD::Studio::EventInstance *instance;
-	checkErrors(desc->value()->createInstance(&instance));
+	FMOD::Studio::EventInstance *instance = createInstance(eventName, true, nullptr);
 	if (instance) {
 		// set 3D attributes once
 		if (!isNull(gameObj)) {
@@ -841,14 +857,7 @@ void Fmod::playOneShot(const String &eventName, Object *gameObj) {
 }
 
 void Fmod::playOneShotWithParams(const String &eventName, Object *gameObj, const Dictionary &parameters) {
-	if (!eventDescriptions.has(eventName)) {
-		FMOD::Studio::EventDescription *desc = nullptr;
-		checkErrors(system->getEvent(eventName.ascii().get_data(), &desc));
-		eventDescriptions.insert(eventName, desc);
-	}
-	auto desc = eventDescriptions.find(eventName);
-	FMOD::Studio::EventInstance *instance;
-	checkErrors(desc->value()->createInstance(&instance));
+	FMOD::Studio::EventInstance *instance = createInstance(eventName, true, nullptr);
 	if (instance) {
 		// set 3D attributes once
 		if (!isNull(gameObj)) {
@@ -867,64 +876,47 @@ void Fmod::playOneShotWithParams(const String &eventName, Object *gameObj, const
 }
 
 void Fmod::playOneShotAttached(const String &eventName, Object *gameObj) {
-	if (!eventDescriptions.has(eventName)) {
-		FMOD::Studio::EventDescription *desc = nullptr;
-		checkErrors(system->getEvent(eventName.ascii().get_data(), &desc));
-		eventDescriptions.insert(eventName, desc);
-	}
-	auto desc = eventDescriptions.find(eventName);
-	FMOD::Studio::EventInstance *instance;
-	checkErrors(desc->value()->createInstance(&instance));
-	if (instance && !isNull(gameObj)) {
-		AttachedOneShot aShot = { instance, gameObj };
-		attachedOneShots.push_back(aShot);
-		checkErrors(instance->start());
+	if (!isNull(gameObj)) {
+		FMOD::Studio::EventInstance *instance = createInstance(eventName, true, gameObj);
+		if (instance) {
+			checkErrors(instance->start());
+		}
 	}
 }
 
 void Fmod::playOneShotAttachedWithParams(const String &eventName, Object *gameObj, const Dictionary &parameters) {
-	if (!eventDescriptions.has(eventName)) {
-		FMOD::Studio::EventDescription *desc = nullptr;
-		checkErrors(system->getEvent(eventName.ascii().get_data(), &desc));
-		eventDescriptions.insert(eventName, desc);
-	}
-	auto desc = eventDescriptions.find(eventName);
-	FMOD::Studio::EventInstance *instance;
-	checkErrors(desc->value()->createInstance(&instance));
-	if (instance && !isNull(gameObj)) {
-		AttachedOneShot aShot = { instance, gameObj };
-		attachedOneShots.push_back(aShot);
-		// set the initial parameter values
-		auto keys = parameters.keys();
-		for (int i = 0; i < keys.size(); i++) {
-			String k = keys[i];
-			float v = parameters[keys[i]];
-			checkErrors(instance->setParameterByName(k.ascii().get_data(), v));
+	if (!isNull(gameObj)) {
+		FMOD::Studio::EventInstance *instance = createInstance(eventName, true, gameObj);
+		if (instance) {
+			// set the initial parameter values
+			auto keys = parameters.keys();
+			for (int i = 0; i < keys.size(); i++) {
+				String k = keys[i];
+				float v = parameters[keys[i]];
+				checkErrors(instance->setParameterByName(k.ascii().get_data(), v));
+			}
+			checkErrors(instance->start());
 		}
-		checkErrors(instance->start());
 	}
 }
 
 void Fmod::attachInstanceToNode(uint64_t instanceId, Object *gameObj) {
-	if (!unmanagedEvents.has(instanceId) || isNull(gameObj)) return;
-	auto i = unmanagedEvents.find(instanceId);
-	if (i->value()) {
-		AttachedOneShot aShot = { i->value(), gameObj };
-		attachedOneShots.push_back(aShot);
+	if (!events.has(instanceId) || isNull(gameObj)) return;
+	auto i = events.find(instanceId);
+	FMOD::Studio::EventInstance *event = i->value();
+	if (event) {
+		EventInfo *eventInfo = getEventInfo(event);
+		eventInfo->gameObj = gameObj;
 	}
 }
 
 void Fmod::detachInstanceFromNode(uint64_t instanceId) {
-	if (!unmanagedEvents.has(instanceId)) return;
-	auto instance = unmanagedEvents.find(instanceId);
-	if (instance->value()) {
-		for (int i = 0; attachedOneShots.size(); i++) {
-			auto attachedInstance = attachedOneShots.get(i).instance;
-			if (attachedInstance == instance->value()) {
-				attachedOneShots.remove(i);
-				break;
-			}
-		}
+	if (!events.has(instanceId)) return;
+	auto instance = events.find(instanceId);
+	FMOD::Studio::EventInstance *event = instance->value();
+	if (event) {
+		EventInfo *eventInfo = getEventInfo(event);
+		eventInfo->gameObj = nullptr;
 	}
 }
 
@@ -1114,17 +1106,17 @@ uint64_t Fmod::getEvent(const String &path) {
 }
 
 void Fmod::setCallback(uint64_t instanceId, int callbackMask) {
-	if (!unmanagedEvents.has(instanceId)) return;
-	auto i = unmanagedEvents.find(instanceId);
-	if (i->value() && checkErrors(i->value()->setCallback(Callbacks::eventCallback, callbackMask))) {
-		Callbacks::eventCallbacks.insert(instanceId, Callbacks::CallbackInfo());
+	if (!events.has(instanceId)) return;
+	FMOD::Studio::EventInstance *event = events.find(instanceId)->value();
+	if (event) {
+		checkErrors(event->setCallback(Callbacks::eventCallback, callbackMask));
 	}
 }
 
 uint64_t Fmod::getEventDescription(uint64_t instanceId) {
-	if (!unmanagedEvents.has(instanceId)) return 0;
+	if (!events.has(instanceId)) return 0;
 
-	auto instance = unmanagedEvents.find(instanceId)->value();
+	auto instance = events.find(instanceId)->value();
 	FMOD::Studio::EventDescription *desc = nullptr;
 	checkErrors(instance->getDescription(&desc));
 	auto ptr = (uint64_t)desc;
@@ -1138,75 +1130,72 @@ FMOD_RESULT F_CALLBACK Callbacks::eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE 
 
 	FMOD::Studio::EventInstance *instance = (FMOD::Studio::EventInstance *)event;
 	auto instanceId = (uint64_t)instance;
-	auto callbackInfo = eventCallbacks.find(instanceId)->get();
-
-	if (type == FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_MARKER) {
-		FMOD_STUDIO_TIMELINE_MARKER_PROPERTIES *props = (FMOD_STUDIO_TIMELINE_MARKER_PROPERTIES *)parameters;
-		mut->lock();
-		callbackInfo.markerCallbackInfo["event_id"] = instanceId;
-		callbackInfo.markerCallbackInfo["name"] = props->name;
-		callbackInfo.markerCallbackInfo["position"] = props->position;
-		callbackInfo.markerCallbackInfo["emitted"] = true;
+	Fmod::EventInfo *eventInfo;
+	mut->lock();
+	//chack if instance is still valid
+	if (!instance) {
 		mut->unlock();
-
-	} else if (type == FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_BEAT) {
-		FMOD_STUDIO_TIMELINE_BEAT_PROPERTIES *props = (FMOD_STUDIO_TIMELINE_BEAT_PROPERTIES *)parameters;
-		mut->lock();
-		callbackInfo.beatCallbackInfo["event_id"] = instanceId;
-		callbackInfo.beatCallbackInfo["beat"] = props->beat;
-		callbackInfo.beatCallbackInfo["bar"] = props->bar;
-		callbackInfo.beatCallbackInfo["tempo"] = props->tempo;
-		callbackInfo.beatCallbackInfo["time_signature_upper"] = props->timesignatureupper;
-		callbackInfo.beatCallbackInfo["time_signature_lower"] = props->timesignaturelower;
-		callbackInfo.beatCallbackInfo["position"] = props->position;
-		callbackInfo.beatCallbackInfo["emitted"] = true;
-		mut->unlock();
+		return FMOD_OK;
 	}
+	instance->getUserData((void **)&eventInfo);
+	if (eventInfo) {
+		Callbacks::CallbackInfo callbackInfo = eventInfo->callbackInfo;
 
-	if (type == FMOD_STUDIO_EVENT_CALLBACK_SOUND_PLAYED || type == FMOD_STUDIO_EVENT_CALLBACK_SOUND_STOPPED) {
-		FMOD::Sound *sound = (FMOD::Sound *)parameters;
-		char n[256];
-		sound->getName(n, 256);
-		String name(n);
-		String mType = type == FMOD_STUDIO_EVENT_CALLBACK_SOUND_PLAYED ? "played" : "stopped";
-		mut->lock();
-		callbackInfo.soundCallbackInfo["name"] = name;
-		callbackInfo.soundCallbackInfo["type"] = mType;
-		callbackInfo.soundCallbackInfo["emitted"] = true;
-		mut->unlock();
+		if (type == FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_MARKER) {
+			FMOD_STUDIO_TIMELINE_MARKER_PROPERTIES *props = (FMOD_STUDIO_TIMELINE_MARKER_PROPERTIES *)parameters;
+			callbackInfo.markerCallbackInfo["event_id"] = instanceId;
+			callbackInfo.markerCallbackInfo["name"] = props->name;
+			callbackInfo.markerCallbackInfo["position"] = props->position;
+			callbackInfo.markerSignalEmitted = false;
+		} else if (type == FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_BEAT) {
+			FMOD_STUDIO_TIMELINE_BEAT_PROPERTIES *props = (FMOD_STUDIO_TIMELINE_BEAT_PROPERTIES *)parameters;
+			callbackInfo.beatCallbackInfo["event_id"] = instanceId;
+			callbackInfo.beatCallbackInfo["beat"] = props->beat;
+			callbackInfo.beatCallbackInfo["bar"] = props->bar;
+			callbackInfo.beatCallbackInfo["tempo"] = props->tempo;
+			callbackInfo.beatCallbackInfo["time_signature_upper"] = props->timesignatureupper;
+			callbackInfo.beatCallbackInfo["time_signature_lower"] = props->timesignaturelower;
+			callbackInfo.beatCallbackInfo["position"] = props->position;
+			callbackInfo.beatSignalEmitted = false;
+		} else if (type == FMOD_STUDIO_EVENT_CALLBACK_SOUND_PLAYED || type == FMOD_STUDIO_EVENT_CALLBACK_SOUND_STOPPED) {
+			FMOD::Sound *sound = (FMOD::Sound *)parameters;
+			char n[256];
+			sound->getName(n, 256);
+			String name(n);
+			String mType = type == FMOD_STUDIO_EVENT_CALLBACK_SOUND_PLAYED ? "played" : "stopped";
+			callbackInfo.soundCallbackInfo["name"] = name;
+			callbackInfo.soundCallbackInfo["type"] = mType;
+			callbackInfo.soundSignalEmitted = false;
+		}
 	}
-
+	mut->unlock();
 	return FMOD_OK;
 }
 
-// runs on the game thread
 void Fmod::runCallbacks() {
 	Callbacks::mut->lock();
-	for (auto e = Callbacks::eventCallbacks.front(); e; e = e->next()) {
-		auto cbInfo = e->get();
-
+	for (auto e = events.front(); e; e = e->next()) {
+		FMOD::Studio::EventInstance *eventInstance = e->get();
+		Callbacks::CallbackInfo cbInfo = getEventInfo(eventInstance)->callbackInfo;
 		// check for Marker callbacks
-		if (cbInfo.markerCallbackInfo["emitted"]) {
-			cbInfo.markerCallbackInfo.erase("emitted");
+		if (!cbInfo.markerSignalEmitted) {
 			emit_signal("timeline_marker", cbInfo.markerCallbackInfo);
-			cbInfo.markerCallbackInfo["emitted"] = false;
+			cbInfo.markerSignalEmitted = true;
 		}
 
 		// check for Beat callbacks
-		if (cbInfo.beatCallbackInfo["emitted"]) {
-			cbInfo.beatCallbackInfo.erase("emitted");
+		if (!cbInfo.beatSignalEmitted) {
 			emit_signal("timeline_beat", cbInfo.beatCallbackInfo);
-			cbInfo.beatCallbackInfo["emitted"] = false;
+			cbInfo.beatSignalEmitted = true;
 		}
 
 		// check for Sound callbacks
-		if (cbInfo.soundCallbackInfo["emitted"]) {
-			cbInfo.soundCallbackInfo.erase("emitted");
+		if (!cbInfo.soundSignalEmitted) {
 			if (cbInfo.soundCallbackInfo["type"] == "played")
 				emit_signal("sound_played", cbInfo.soundCallbackInfo);
 			else
 				emit_signal("sound_stopped", cbInfo.soundCallbackInfo);
-			cbInfo.soundCallbackInfo["emitted"] = false;
+			cbInfo.soundSignalEmitted = true;
 		}
 	}
 	Callbacks::mut->unlock();

@@ -35,22 +35,18 @@
 #include "api/studio/inc/fmod_studio.hpp"
 
 namespace Callbacks {
-
-Mutex *mut;
-
 struct CallbackInfo {
-	// Maintain callback info for Timeline Markers
 	Dictionary markerCallbackInfo;
+	bool markerSignalEmitted = true;
 
-	// Maintain callback info for Timeline Beats & Bars
 	Dictionary beatCallbackInfo;
+	bool beatSignalEmitted = true;
 
-	// Maintain callback info for Sounds played or stopped
 	Dictionary soundCallbackInfo;
+	bool soundSignalEmitted = true;
 };
 
-Map<uint64_t, CallbackInfo> eventCallbacks;
+extern Mutex *mut;
 
 FMOD_RESULT F_CALLBACK eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_STUDIO_EVENTINSTANCE *event, void *parameters);
-
 } // namespace Callbacks

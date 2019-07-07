@@ -44,7 +44,19 @@
 #include "api/core/inc/fmod_errors.h"
 #include "api/studio/inc/fmod_studio.hpp"
 
+#include "callbacks.h"
+
 class Fmod : public Object {
+public:
+	struct EventInfo {
+		// GameObject to which this event is attached
+		Object *gameObj = nullptr;
+
+		// Callback info associated with this event
+		Callbacks::CallbackInfo callbackInfo = Callbacks::CallbackInfo();
+	};
+
+private:
 	GDCLASS(Fmod, Object);
 
 	FMOD::Studio::System *system;
@@ -62,15 +74,7 @@ class Fmod : public Object {
 	Map<String, FMOD::Studio::Bus *> buses;
 	Map<String, FMOD::Studio::VCA *> VCAs;
 
-	// maintain attached instances internally
-	struct AttachedOneShot {
-		FMOD::Studio::EventInstance *instance;
-		Object *gameObj;
-	};
-	Vector<AttachedOneShot> attachedOneShots;
-
-	// events not directly managed by the integration
-	Map<uint64_t, FMOD::Studio::EventInstance *> unmanagedEvents;
+	Map<uint64_t, FMOD::Studio::EventInstance *> events;
 
 	// for playing sounds using FMOD Core / Low Level
 	Map<uint64_t, FMOD::Sound *> sounds;
@@ -85,6 +89,9 @@ class Fmod : public Object {
 	void loadBus(const String &busPath);
 	void loadVCA(const String &VCAPath);
 	void runCallbacks();
+	FMOD::Studio::EventInstance *createInstance(String eventPath, bool isOneShot, Object *gameObject);
+	EventInfo *getEventInfo(FMOD::Studio::EventInstance *eventInstance);
+	void releaseOneEvent(FMOD::Studio::EventInstance *eventInstance);
 
 protected:
 	static Fmod *singleton;
