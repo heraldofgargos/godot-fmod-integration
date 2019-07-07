@@ -1433,5 +1433,4 @@ Fmod::Fmod() {
 Fmod::~Fmod() {
 	Callbacks::mut->~Mutex();
 	singleton = nullptr;
-	Fmod::shutdown();
 }

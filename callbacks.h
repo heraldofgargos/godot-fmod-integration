@@ -36,12 +36,14 @@
 
 namespace Callbacks {
     struct CallbackInfo {
-		bool markerSignalEmitted = true;
-		bool beatSignalEmitted = true;
-		bool soundSignalEmitted = true;
 		Dictionary markerCallbackInfo;
+		bool markerSignalEmitted = true;
+
 		Dictionary beatCallbackInfo;
+		bool beatSignalEmitted = true;
+
 		Dictionary soundCallbackInfo;
+		bool soundSignalEmitted = true;
 	};
 	
     extern Mutex *mut;

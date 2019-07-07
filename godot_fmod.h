@@ -43,20 +43,11 @@
 #include "api/core/inc/fmod.hpp"
 #include "api/core/inc/fmod_errors.h"
 #include "api/studio/inc/fmod_studio.hpp"
+
 #include "callbacks.h"
 
 class Fmod : public Object
 {
-public:
-	struct EventInfo
-	{
-		// GameObject to which this event is attached
-		Object *gameObj = nullptr;
-
-		// Callback info associated with this event
-		Callbacks::CallbackInfo callbackInfo = Callbacks::CallbackInfo();
-	};
-
 private:
 	GDCLASS(Fmod, Object);
 
@@ -99,6 +90,15 @@ protected:
 	static void _bind_methods();
 
 public:
+	struct EventInfo
+	{
+		// GameObject to which this event is attached
+		Object* gameObj = nullptr;
+
+		// Callback info associated with this event
+		Callbacks::CallbackInfo callbackInfo = Callbacks::CallbackInfo();
+	};
+
 	/* System functions */
 	void init(int numOfChannels, int studioFlags, int flags);
 	void update();
