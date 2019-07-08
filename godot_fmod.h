@@ -90,6 +90,7 @@ private:
 	void loadVCA(const String &VCAPath);
 	void runCallbacks();
 	FMOD::Studio::EventInstance *createInstance(String eventPath, bool isOneShot, Object *gameObject);
+	FMOD::Studio::EventInstance *createInstance(FMOD::Studio::EventDescription *eventDesc, bool isOneShot, Object *gameObject);
 	EventInfo *getEventInfo(FMOD::Studio::EventInstance *eventInstance);
 	void releaseOneEvent(FMOD::Studio::EventInstance *eventInstance);
 
@@ -156,7 +157,7 @@ public:
 	float descGetMinimumDistance(uint64_t descHandle);
 	float descGetSoundSize(uint64_t descHandle);
 	Dictionary descGetParameterDescriptionByName(uint64_t descHandle, const String &name);
-	Dictionary descGetParameterDescriptionByID(uint64_t descHandle, Array idPair);
+	Dictionary descGetParameterDescriptionByID(uint64_t descHandle, const Array &idPair);
 	int descGetParameterDescriptionCount(uint64_t descHandle);
 	Dictionary descGetParameterDescriptionByIndex(uint64_t descHandle, int index);
 	Dictionary descGetUserProperty(uint64_t descHandle, String name);
@@ -164,8 +165,10 @@ public:
 	Dictionary descUserPropertyByIndex(uint64_t descHandle, int index);
 
 	/* EventInstance functions */
-	float getEventParameter(uint64_t instanceId, const String &parameterName);
-	void setEventParameter(uint64_t instanceId, const String &parameterName, float value);
+	float getEventParameterByName(uint64_t instanceId, const String &parameterName);
+	void setEventParameterByName(uint64_t instanceId, const String &parameterName, float value);
+	float getEventParameterByID(uint64_t instanceId, const Array &idPair);
+	void setEventParameterByID(uint64_t instanceId, const Array &idPair, float value);
 	void releaseEvent(uint64_t instanceId);
 	void startEvent(uint64_t instanceId);
 	void stopEvent(uint64_t instanceId, int stopMode);

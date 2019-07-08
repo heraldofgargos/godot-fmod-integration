@@ -302,15 +302,10 @@ int Fmod::getBankVCACount(const String &pathToBank) {
 
 uint64_t Fmod::descCreateInstance(uint64_t descHandle) {
 	if (!ptrToEventDescMap.has(descHandle)) return 0;
-
 	auto desc = ptrToEventDescMap.find(descHandle)->value();
-	FMOD::Studio::EventInstance *instance = nullptr;
-	checkErrors(desc->createInstance(&instance));
-	if (instance) {
-		auto ptr = (uint64_t)instance;
-		events.insert(ptr, instance);
-		return ptr;
-	}
+	auto instance = createInstance(desc, false, nullptr);
+	if (instance)
+		return (uint64_t)instance;
 	return 0;
 }
 
@@ -323,7 +318,7 @@ int Fmod::descGetLength(uint64_t descHandle) {
 }
 
 String Fmod::descGetPath(uint64_t descHandle) {
-	if (!ptrToEventDescMap.has(descHandle)) return String("undefined");
+	if (!ptrToEventDescMap.has(descHandle)) return String("Invalid handle!");
 	auto desc = ptrToEventDescMap.find(descHandle)->value();
 	char path[256];
 	int retrived = 0;
@@ -461,7 +456,7 @@ Dictionary Fmod::descGetParameterDescriptionByName(uint64_t descHandle, const St
 	return paramDesc;
 }
 
-Dictionary Fmod::descGetParameterDescriptionByID(uint64_t descHandle, Array idPair) {
+Dictionary Fmod::descGetParameterDescriptionByID(uint64_t descHandle, const Array &idPair) {
 	Dictionary paramDesc;
 	if (!ptrToEventDescMap.has(descHandle) || idPair.size() != 2) return paramDesc;
 	auto desc = ptrToEventDescMap.find(descHandle)->value();
@@ -582,7 +577,21 @@ FMOD::Studio::EventInstance *Fmod::createInstance(const String eventPath, const 
 	return instance;
 }
 
-float Fmod::getEventParameter(uint64_t instanceId, const String &parameterName) {
+FMOD::Studio::EventInstance *Fmod::createInstance(FMOD::Studio::EventDescription *eventDesc, bool isOneShot, Object *gameObject) {
+	auto desc = eventDesc;
+	FMOD::Studio::EventInstance *instance;
+	checkErrors(desc->createInstance(&instance));
+	if (instance && (!isOneShot || gameObject)) {
+		auto *eventInfo = new EventInfo();
+		eventInfo->gameObj = gameObject;
+		instance->setUserData(eventInfo);
+		auto instanceId = (uint64_t)instance;
+		events[instanceId] = instance;
+	}
+	return instance;
+}
+
+float Fmod::getEventParameterByName(uint64_t instanceId, const String &parameterName) {
 	float p = -1;
 	if (!events.has(instanceId)) return p;
 	auto i = events.find(instanceId);
@@ -591,10 +600,35 @@ float Fmod::getEventParameter(uint64_t instanceId, const String &parameterName) 
 	return p;
 }
 
-void Fmod::setEventParameter(uint64_t instanceId, const String &parameterName, float value) {
+void Fmod::setEventParameterByName(uint64_t instanceId, const String &parameterName, float value) {
 	if (!events.has(instanceId)) return;
 	auto i = events.find(instanceId);
 	if (i->value()) checkErrors(i->value()->setParameterByName(parameterName.ascii().get_data(), value));
+}
+
+float Fmod::getEventParameterByID(uint64_t instanceId, const Array &idPair) {
+	if (!events.has(instanceId) || idPair.size() != 2) return -1.0f;
+	auto i = events.find(instanceId);
+	if (i->value()) {
+		FMOD_STUDIO_PARAMETER_ID id;
+		id.data1 = idPair[0];
+		id.data2 = idPair[1];
+		float value;
+		checkErrors(i->value()->getParameterByID(id, &value));
+		return value;
+	}
+	return -1.0f;
+}
+
+void Fmod::setEventParameterByID(uint64_t instanceId, const Array &idPair, float value) {
+	if (!events.has(instanceId) || idPair.size() != 2) return;
+	auto i = events.find(instanceId);
+	if (i->value()) {
+		FMOD_STUDIO_PARAMETER_ID id;
+		id.data1 = idPair[0];
+		id.data2 = idPair[1];
+		checkErrors(i->value()->setParameterByID(id, value));
+	}
 }
 
 void Fmod::releaseEvent(uint64_t instanceId) {
@@ -1268,26 +1302,28 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("event_desc_get_user_property_by_index", "desc_handle", "index"), &Fmod::descGetParameterDescriptionByIndex);
 
 	/* EventInstance functions */
-	ClassDB::bind_method(D_METHOD("event_get_parameter", "id", "parameter_name"), &Fmod::getEventParameter);
-	ClassDB::bind_method(D_METHOD("event_set_parameter", "id", "parameter_name", "value"), &Fmod::setEventParameter);
-	ClassDB::bind_method(D_METHOD("event_release", "id"), &Fmod::releaseEvent);
-	ClassDB::bind_method(D_METHOD("event_start", "id"), &Fmod::startEvent);
-	ClassDB::bind_method(D_METHOD("event_stop", "id", "stop_mode"), &Fmod::stopEvent);
-	ClassDB::bind_method(D_METHOD("event_trigger_cue", "id"), &Fmod::triggerEventCue);
-	ClassDB::bind_method(D_METHOD("event_get_playback_state", "id"), &Fmod::getEventPlaybackState);
-	ClassDB::bind_method(D_METHOD("event_get_paused", "id"), &Fmod::getEventPaused);
-	ClassDB::bind_method(D_METHOD("event_set_paused", "id", "paused"), &Fmod::setEventPaused);
-	ClassDB::bind_method(D_METHOD("event_get_pitch", "id"), &Fmod::getEventPitch);
-	ClassDB::bind_method(D_METHOD("event_set_pitch", "id", "pitch"), &Fmod::setEventPitch);
-	ClassDB::bind_method(D_METHOD("event_get_volume", "id"), &Fmod::getEventVolume);
-	ClassDB::bind_method(D_METHOD("event_set_volume", "id", "volume"), &Fmod::setEventVolume);
-	ClassDB::bind_method(D_METHOD("event_get_timeline_position", "id"), &Fmod::getEventTimelinePosition);
-	ClassDB::bind_method(D_METHOD("event_set_timeline_position", "id", "position"), &Fmod::setEventTimelinePosition);
-	ClassDB::bind_method(D_METHOD("event_get_reverb_level", "id", "index"), &Fmod::getEventReverbLevel);
-	ClassDB::bind_method(D_METHOD("event_set_reverb_level", "id", "index", "level"), &Fmod::setEventReverbLevel);
-	ClassDB::bind_method(D_METHOD("event_is_virtual", "id"), &Fmod::isEventVirtual);
-	ClassDB::bind_method(D_METHOD("event_set_callback", "id", "callback_mask"), &Fmod::setCallback);
-	ClassDB::bind_method(D_METHOD("event_get_description", "id"), &Fmod::getEventDescription);
+	ClassDB::bind_method(D_METHOD("event_get_parameter_by_name", "handle", "parameter_name"), &Fmod::getEventParameterByName);
+	ClassDB::bind_method(D_METHOD("event_set_parameter_by_name", "handle", "parameter_name", "value"), &Fmod::setEventParameterByName);
+	ClassDB::bind_method(D_METHOD("event_get_parameter_by_id", "handle", "parameter_id_pair"), &Fmod::getEventParameterByID);
+	ClassDB::bind_method(D_METHOD("event_set_parameter_by_id", "handle", "parameter_id_pair", "value"), &Fmod::setEventParameterByID);
+	ClassDB::bind_method(D_METHOD("event_release", "handle"), &Fmod::releaseEvent);
+	ClassDB::bind_method(D_METHOD("event_start", "handle"), &Fmod::startEvent);
+	ClassDB::bind_method(D_METHOD("event_stop", "handle", "stop_mode"), &Fmod::stopEvent);
+	ClassDB::bind_method(D_METHOD("event_trigger_cue", "handle"), &Fmod::triggerEventCue);
+	ClassDB::bind_method(D_METHOD("event_get_playback_state", "handle"), &Fmod::getEventPlaybackState);
+	ClassDB::bind_method(D_METHOD("event_get_paused", "handle"), &Fmod::getEventPaused);
+	ClassDB::bind_method(D_METHOD("event_set_paused", "handle", "paused"), &Fmod::setEventPaused);
+	ClassDB::bind_method(D_METHOD("event_get_pitch", "handle"), &Fmod::getEventPitch);
+	ClassDB::bind_method(D_METHOD("event_set_pitch", "handle", "pitch"), &Fmod::setEventPitch);
+	ClassDB::bind_method(D_METHOD("event_get_volume", "handle"), &Fmod::getEventVolume);
+	ClassDB::bind_method(D_METHOD("event_set_volume", "handle", "volume"), &Fmod::setEventVolume);
+	ClassDB::bind_method(D_METHOD("event_get_timeline_position", "handle"), &Fmod::getEventTimelinePosition);
+	ClassDB::bind_method(D_METHOD("event_set_timeline_position", "handle", "position"), &Fmod::setEventTimelinePosition);
+	ClassDB::bind_method(D_METHOD("event_get_reverb_level", "handle", "index"), &Fmod::getEventReverbLevel);
+	ClassDB::bind_method(D_METHOD("event_set_reverb_level", "handle", "index", "level"), &Fmod::setEventReverbLevel);
+	ClassDB::bind_method(D_METHOD("event_is_virtual", "handle"), &Fmod::isEventVirtual);
+	ClassDB::bind_method(D_METHOD("event_set_callback", "handle", "callback_mask"), &Fmod::setCallback);
+	ClassDB::bind_method(D_METHOD("event_get_description", "handle"), &Fmod::getEventDescription);
 
 	/* Bus functions */
 	ClassDB::bind_method(D_METHOD("bus_get_mute", "path_to_bus"), &Fmod::getBusMute);
