@@ -101,40 +101,67 @@ void Fmod::shutdown() {
 }
 
 void Fmod::setListenerAttributes() {
-	if (isNull(listener)) {
-		if (nullListenerWarning) {
+	if (listeners.size() == 0) {
+		if (listenerWarning) {
 			print_error("FMOD Sound System: Listener not set!");
-			nullListenerWarning = false;
+			listenerWarning = false;
 		}
 		return;
 	}
-	CanvasItem *ci = Object::cast_to<CanvasItem>(listener);
-	if (ci != nullptr) { // Listener is in 2D space
-		Transform2D t2d = ci->get_transform();
-		Vector2 posVector = t2d.get_origin() / distanceScale;
-		// in 2D, the distance is measured in pixels
-		// TODO: Revise the set3DAttributes call. In 2D, the listener must be a few units away from
-		// the emitters (or the screen) and must face them directly.
-		Vector3 pos(posVector.x, 0.0f, posVector.y),
-				up(0, 1, 0), forward(0, 0, 1), vel(0, 0, 0); // TODO: add doppler
-		FMOD_3D_ATTRIBUTES attr = get3DAttributes(toFmodVector(pos), toFmodVector(up), toFmodVector(forward), toFmodVector(vel));
-		checkErrors(system->setListenerAttributes(0, &attr));
+	for (auto e = listeners.front(); e; e = e->next()) {
+		auto index = e->key();
+		auto listener = e->value();
 
-	} else { // Listener is in 3D space
-		// needs testing
-		Spatial *s = Object::cast_to<Spatial>(listener);
-		Transform t = s->get_transform();
-		Vector3 pos = t.get_origin() / distanceScale;
-		Vector3 up = t.get_basis().elements[1];
-		Vector3 forward = t.get_basis().elements[2];
-		Vector3 vel(0, 0, 0);
-		FMOD_3D_ATTRIBUTES attr = get3DAttributes(toFmodVector(pos), toFmodVector(up), toFmodVector(forward), toFmodVector(vel));
-		checkErrors(system->setListenerAttributes(0, &attr));
+		if (isNull(listener)) {
+			continue;
+		}
+
+		CanvasItem *ci = Object::cast_to<CanvasItem>(listener);
+		if (ci != nullptr) { // Listener is in 2D space
+			Transform2D t2d = ci->get_transform();
+			Vector2 posVector = t2d.get_origin() / distanceScale;
+			// in 2D, the distance is measured in pixels
+			// TODO: Revise the set3DAttributes call. In 2D, the listener must be a few units away from
+			// the emitters (or the screen) and must face them directly.
+			Vector3 pos(posVector.x, 0.0f, posVector.y),
+					up(0, 1, 0), forward(0, 0, 1), vel(0, 0, 0); // TODO: add doppler
+			FMOD_3D_ATTRIBUTES attr = get3DAttributes(toFmodVector(pos), toFmodVector(up), toFmodVector(forward), toFmodVector(vel));
+			checkErrors(system->setListenerAttributes(index, &attr));
+
+		} else { // Listener is in 3D space
+			// needs testing
+			Spatial *s = Object::cast_to<Spatial>(listener);
+			Transform t = s->get_transform();
+			Vector3 pos = t.get_origin() / distanceScale;
+			Vector3 up = t.get_basis().elements[1];
+			Vector3 forward = t.get_basis().elements[2];
+			Vector3 vel(0, 0, 0);
+			FMOD_3D_ATTRIBUTES attr = get3DAttributes(toFmodVector(pos), toFmodVector(up), toFmodVector(forward), toFmodVector(vel));
+			checkErrors(system->setListenerAttributes(index, &attr));
+		}
 	}
 }
 
-void Fmod::addListener(Object *gameObj) {
-	listener = gameObj;
+int Fmod::addListener(Object *gameObj) {
+	if (listeners.size() == FMOD_MAX_LISTENERS) {
+		print_error("FMOD Sound System: Could not add listener. System already at max listeners.");
+		return -1;
+	}
+	auto index = listeners.size();
+	listeners.insert(index, gameObj);
+	checkErrors(system->setNumListeners(listeners.size()));
+	return index;
+}
+
+void Fmod::removeListener(uint32_t index) {
+	if (!listeners.has(index)) {
+		print_error("FMOD Sound System: Invalid listener ID");
+		return;
+	}
+	listeners.erase(index);
+	checkErrors(system->setNumListeners(listeners.size()));
+	std::string s = "FMOD Sound System: Listener at index " + std::to_string(index) + " was removed";
+	print_line(s.c_str());
 }
 
 void Fmod::setSoftwareFormat(int sampleRate, int speakerMode, int numRawSpeakers) {
@@ -154,7 +181,7 @@ float Fmod::getGlobalParameterByName(const String &parameterName) {
 
 void Fmod::setGlobalParameterByID(const Array &idPair, float value) {
 	if (idPair.size() != 2) {
-		print_error("Invalid parameter ID");
+		print_error("FMOD Sound System: Invalid parameter ID");
 		return;
 	}
 	FMOD_STUDIO_PARAMETER_ID id;
@@ -165,7 +192,7 @@ void Fmod::setGlobalParameterByID(const Array &idPair, float value) {
 
 float Fmod::getGlobalParameterByID(const Array &idPair) {
 	if (idPair.size() != 2) {
-		print_error("Invalid parameter ID");
+		print_error("FMOD Sound System: Invalid parameter ID");
 		return -1.f;
 	}
 	FMOD_STUDIO_PARAMETER_ID id;
@@ -193,7 +220,7 @@ Dictionary Fmod::getGlobalParameterDescByName(const String &parameterName) {
 
 Dictionary Fmod::getGlobalParameterDescByID(const Array &idPair) {
 	if (idPair.size() != 2) {
-		print_error("Invalid parameter ID");
+		print_error("FMOD Sound System: Invalid parameter ID");
 		return Dictionary();
 	}
 	Dictionary paramDesc;
@@ -1378,6 +1405,7 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("system_update"), &Fmod::update);
 	ClassDB::bind_method(D_METHOD("system_shutdown"), &Fmod::shutdown);
 	ClassDB::bind_method(D_METHOD("system_add_listener", "node"), &Fmod::addListener);
+	ClassDB::bind_method(D_METHOD("system_remove_listener", "index"), &Fmod::removeListener);
 	ClassDB::bind_method(D_METHOD("system_set_software_format", "sample_rate", "speaker_mode", "num_raw_speakers"), &Fmod::setSoftwareFormat);
 	ClassDB::bind_method(D_METHOD("system_set_parameter_by_name", "name", "value"), &Fmod::setGlobalParameterByName);
 	ClassDB::bind_method(D_METHOD("system_get_parameter_by_name", "name"), &Fmod::getGlobalParameterByName);
@@ -1607,7 +1635,6 @@ Fmod::Fmod() {
 	singleton = this;
 	system = nullptr;
 	coreSystem = nullptr;
-	listener = nullptr;
 	Callbacks::mut = Mutex::create();
 	checkErrors(FMOD::Studio::System::create(&system));
 	checkErrors(system->getCoreSystem(&coreSystem));

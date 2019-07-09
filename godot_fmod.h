@@ -29,6 +29,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "core/array.h"
 #include "core/dictionary.h"
 #include "core/map.h"
@@ -62,18 +64,16 @@ private:
 	FMOD::Studio::System *system;
 	FMOD::System *coreSystem;
 
-	Object *listener;
-
-	bool nullListenerWarning = true;
-
+	bool listenerWarning = true;
 	float distanceScale = 1.0f;
+
+	Map<uint32_t, Object *> listeners;
 
 	Map<String, FMOD::Studio::Bank *> banks;
 	Map<String, FMOD::Studio::EventDescription *> eventDescriptions;
 	Map<uint64_t, FMOD::Studio::EventDescription *> ptrToEventDescMap;
 	Map<String, FMOD::Studio::Bus *> buses;
 	Map<String, FMOD::Studio::VCA *> VCAs;
-
 	Map<uint64_t, FMOD::Studio::EventInstance *> events;
 
 	// for playing sounds using FMOD Core / Low Level
@@ -103,7 +103,8 @@ public:
 	void init(int numOfChannels, int studioFlags, int flags);
 	void update();
 	void shutdown();
-	void addListener(Object *gameObj);
+	int addListener(Object *gameObj);
+	void removeListener(uint32_t index);
 	void setSoftwareFormat(int sampleRate, int speakerMode, int numRawSpeakers);
 	void setSound3DSettings(float dopplerScale, float distanceFactor, float rollOffScale);
 	uint64_t getEvent(const String &path);
