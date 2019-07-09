@@ -111,6 +111,10 @@ public:
 	float getGlobalParameterByName(const String &parameterName);
 	void setGlobalParameterByID(const Array &idPair, float value);
 	float getGlobalParameterByID(const Array &idPair);
+	Dictionary getGlobalParameterDescByName(const String &parameterName);
+	Dictionary getGlobalParameterDescByID(const Array &idPair);
+	uint32_t getGlobalParameterDescCount();
+	Array getGlobalParameterDescList();
 	Array getAvailableDrivers();
 	int getDriver();
 	void setDriver(int id);

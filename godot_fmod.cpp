@@ -176,6 +176,68 @@ float Fmod::getGlobalParameterByID(const Array &idPair) {
 	return value;
 }
 
+Dictionary Fmod::getGlobalParameterDescByName(const String &parameterName) {
+	Dictionary paramDesc;
+	FMOD_STUDIO_PARAMETER_DESCRIPTION pDesc;
+	if (checkErrors(system->getParameterDescriptionByName(parameterName.ascii().get_data(), &pDesc))) {
+		paramDesc["name"] = String(pDesc.name);
+		paramDesc["id_first"] = pDesc.id.data1;
+		paramDesc["id_second"] = pDesc.id.data2;
+		paramDesc["minimum"] = pDesc.minimum;
+		paramDesc["maximum"] = pDesc.maximum;
+		paramDesc["default_value"] = pDesc.defaultvalue;
+	}
+
+	return paramDesc;
+}
+
+Dictionary Fmod::getGlobalParameterDescByID(const Array &idPair) {
+	if (idPair.size() != 2) {
+		print_error("Invalid parameter ID");
+		return Dictionary();
+	}
+	Dictionary paramDesc;
+	FMOD_STUDIO_PARAMETER_ID id;
+	id.data1 = idPair[0];
+	id.data2 = idPair[1];
+	FMOD_STUDIO_PARAMETER_DESCRIPTION pDesc;
+	if (checkErrors(system->getParameterDescriptionByID(id, &pDesc))) {
+		paramDesc["name"] = String(pDesc.name);
+		paramDesc["id_first"] = pDesc.id.data1;
+		paramDesc["id_second"] = pDesc.id.data2;
+		paramDesc["minimum"] = pDesc.minimum;
+		paramDesc["maximum"] = pDesc.maximum;
+		paramDesc["default_value"] = pDesc.defaultvalue;
+	}
+
+	return paramDesc;
+}
+
+uint32_t Fmod::getGlobalParameterDescCount() {
+	int count = 0;
+	checkErrors(system->getParameterDescriptionCount(&count));
+	return count;
+}
+
+Array Fmod::getGlobalParameterDescList() {
+	Array a;
+	FMOD_STUDIO_PARAMETER_DESCRIPTION descList[256];
+	int count = 0;
+	checkErrors(system->getParameterDescriptionList(descList, 256, &count));
+	for (int i = 0; i < count; i++) {
+		auto pDesc = descList[i];
+		Dictionary paramDesc;
+		paramDesc["name"] = String(pDesc.name);
+		paramDesc["id_first"] = pDesc.id.data1;
+		paramDesc["id_second"] = pDesc.id.data2;
+		paramDesc["minimum"] = pDesc.minimum;
+		paramDesc["maximum"] = pDesc.maximum;
+		paramDesc["default_value"] = pDesc.defaultvalue;
+		a.append(paramDesc);
+	}
+	return a;
+}
+
 Array Fmod::getAvailableDrivers() {
 	Array driverList;
 	int numDrivers = 0;
@@ -1270,6 +1332,10 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("system_get_parameter_by_name", "name"), &Fmod::getGlobalParameterByName);
 	ClassDB::bind_method(D_METHOD("system_set_parameter_by_id", "id_pair", "value"), &Fmod::setGlobalParameterByID);
 	ClassDB::bind_method(D_METHOD("system_get_parameter_by_id", "id_pair"), &Fmod::getGlobalParameterByID);
+	ClassDB::bind_method(D_METHOD("system_get_parameter_desc_by_name", "name"), &Fmod::getGlobalParameterDescByName);
+	ClassDB::bind_method(D_METHOD("system_get_parameter_desc_by_id", "id_pair"), &Fmod::getGlobalParameterDescByID);
+	ClassDB::bind_method(D_METHOD("system_get_parameter_desc_count"), &Fmod::getGlobalParameterDescCount);
+	ClassDB::bind_method(D_METHOD("system_get_parameter_desc_list"), &Fmod::getGlobalParameterDescList);
 
 	ClassDB::bind_method(D_METHOD("system_set_sound_3d_settings", "dopplerScale", "distanceFactor", "rollOffScale"), &Fmod::setSound3DSettings);
 	ClassDB::bind_method(D_METHOD("system_get_available_drivers"), &Fmod::getAvailableDrivers);
