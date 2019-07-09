@@ -1245,6 +1245,37 @@ uint64_t Fmod::getEventDescription(uint64_t instanceId) {
 	return ptr;
 }
 
+void Fmod::setEvent3DAttributes(uint64_t instanceId, Vector3 forward, Vector3 position, Vector3 up, Vector3 velocity) {
+	if (!events.has(instanceId)) return;
+	auto instance = events.find(instanceId)->value();
+	FMOD_3D_ATTRIBUTES attr;
+	attr.forward = toFmodVector(forward);
+	attr.position = toFmodVector(position);
+	attr.up = toFmodVector(up);
+	attr.velocity = toFmodVector(velocity);
+	checkErrors(instance->set3DAttributes(&attr));
+}
+
+Dictionary Fmod::getEvent3DAttributes(uint64_t instanceId) {
+	if (!events.has(instanceId)) {
+		print_error("Invalid event instance handle");
+		return Dictionary();
+	}
+	auto instance = events.find(instanceId)->value();
+	FMOD_3D_ATTRIBUTES attr;
+	checkErrors(instance->get3DAttributes(&attr));
+	Dictionary _3Dattr;
+	Vector3 forward(attr.forward.x, attr.forward.y, attr.forward.z);
+	Vector3 up(attr.up.x, attr.up.y, attr.up.z);
+	Vector3 position(attr.position.x, attr.position.y, attr.position.z);
+	Vector3 velocity(attr.velocity.x, attr.velocity.y, attr.velocity.z);
+	_3Dattr["forward"] = forward;
+	_3Dattr["position"] = position;
+	_3Dattr["up"] = up;
+	_3Dattr["velocity"] = velocity;
+	return _3Dattr;
+}
+
 // runs on the Studio update thread, not the game thread
 FMOD_RESULT F_CALLBACK Callbacks::eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_STUDIO_EVENTINSTANCE *event, void *parameters) {
 
@@ -1252,7 +1283,7 @@ FMOD_RESULT F_CALLBACK Callbacks::eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE 
 	auto instanceId = (uint64_t)instance;
 	Fmod::EventInfo *eventInfo;
 	mut->lock();
-	//chack if instance is still valid
+	// check if instance is still valid
 	if (!instance) {
 		mut->unlock();
 		return FMOD_OK;
@@ -1417,6 +1448,8 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("event_is_virtual", "handle"), &Fmod::isEventVirtual);
 	ClassDB::bind_method(D_METHOD("event_set_callback", "handle", "callback_mask"), &Fmod::setCallback);
 	ClassDB::bind_method(D_METHOD("event_get_description", "handle"), &Fmod::getEventDescription);
+	ClassDB::bind_method(D_METHOD("event_set_3D_attributes", "handle", "forward", "position", "up", "velocity"), &Fmod::setEvent3DAttributes);
+	ClassDB::bind_method(D_METHOD("event_get_3D_attributes", "handle"), &Fmod::getEvent3DAttributes);
 
 	/* Bus functions */
 	ClassDB::bind_method(D_METHOD("bus_get_mute", "path_to_bus"), &Fmod::getBusMute);
