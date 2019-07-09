@@ -1276,6 +1276,26 @@ Dictionary Fmod::getEvent3DAttributes(uint64_t instanceId) {
 	return _3Dattr;
 }
 
+void Fmod::setEventListenerMask(uint64_t instanceId, int mask) {
+	if (!events.has(instanceId)) {
+		print_error("Invalid event instance handle");
+		return;
+	}
+	auto instance = events.find(instanceId)->value();
+	checkErrors(instance->setListenerMask(mask));
+}
+
+uint32_t Fmod::getEventListenerMask(uint64_t instanceId) {
+	if (!events.has(instanceId)) {
+		print_error("Invalid event instance handle");
+		return 0;
+	}
+	auto instance = events.find(instanceId)->value();
+	uint32_t mask = 0;
+	checkErrors(instance->getListenerMask(&mask));
+	return mask;
+}
+
 // runs on the Studio update thread, not the game thread
 FMOD_RESULT F_CALLBACK Callbacks::eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_STUDIO_EVENTINSTANCE *event, void *parameters) {
 
@@ -1450,6 +1470,8 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("event_get_description", "handle"), &Fmod::getEventDescription);
 	ClassDB::bind_method(D_METHOD("event_set_3D_attributes", "handle", "forward", "position", "up", "velocity"), &Fmod::setEvent3DAttributes);
 	ClassDB::bind_method(D_METHOD("event_get_3D_attributes", "handle"), &Fmod::getEvent3DAttributes);
+	ClassDB::bind_method(D_METHOD("event_set_listener_mask", "handle", "mask"), &Fmod::setEventListenerMask);
+	ClassDB::bind_method(D_METHOD("event_get_listener_mask", "handle"), &Fmod::getEventListenerMask);
 
 	/* Bus functions */
 	ClassDB::bind_method(D_METHOD("bus_get_mute", "path_to_bus"), &Fmod::getBusMute);

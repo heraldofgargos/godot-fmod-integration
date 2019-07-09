@@ -195,6 +195,8 @@ public:
 	uint64_t getEventDescription(uint64_t instanceId);
 	void setEvent3DAttributes(uint64_t instanceId, Vector3 forward, Vector3 position, Vector3 up, Vector3 velocity);
 	Dictionary getEvent3DAttributes(uint64_t instanceId);
+	void setEventListenerMask(uint64_t instanceId, int mask);
+	uint32_t getEventListenerMask(uint64_t instanceId);
 
 	/* Bus functions */
 	bool getBusMute(const String &busPath);
