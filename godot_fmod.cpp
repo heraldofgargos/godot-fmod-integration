@@ -142,13 +142,37 @@ void Fmod::setSoftwareFormat(int sampleRate, int speakerMode, int numRawSpeakers
 	checkErrors(coreSystem->setSoftwareFormat(sampleRate, m, numRawSpeakers));
 }
 
-void Fmod::setGlobalParameter(const String &parameterName, float value) {
+void Fmod::setGlobalParameterByName(const String &parameterName, float value) {
 	checkErrors(system->setParameterByName(parameterName.ascii().get_data(), value));
 }
 
-float Fmod::getGlobalParameter(const String &parameterName) {
+float Fmod::getGlobalParameterByName(const String &parameterName) {
 	float value = 0.f;
 	checkErrors(system->getParameterByName(parameterName.ascii().get_data(), &value));
+	return value;
+}
+
+void Fmod::setGlobalParameterByID(const Array &idPair, float value) {
+	if (idPair.size() != 2) {
+		print_error("Invalid parameter ID");
+		return;
+	}
+	FMOD_STUDIO_PARAMETER_ID id;
+	id.data1 = idPair[0];
+	id.data2 = idPair[1];
+	checkErrors(system->setParameterByID(id, value));
+}
+
+float Fmod::getGlobalParameterByID(const Array &idPair) {
+	if (idPair.size() != 2) {
+		print_error("Invalid parameter ID");
+		return -1.f;
+	}
+	FMOD_STUDIO_PARAMETER_ID id;
+	id.data1 = idPair[0];
+	id.data2 = idPair[1];
+	float value = -1.f;
+	checkErrors(system->getParameterByID(id, &value));
 	return value;
 }
 
@@ -1242,8 +1266,11 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("system_shutdown"), &Fmod::shutdown);
 	ClassDB::bind_method(D_METHOD("system_add_listener", "node"), &Fmod::addListener);
 	ClassDB::bind_method(D_METHOD("system_set_software_format", "sample_rate", "speaker_mode", "num_raw_speakers"), &Fmod::setSoftwareFormat);
-	ClassDB::bind_method(D_METHOD("system_set_parameter", "name", "value"), &Fmod::setGlobalParameter);
-	ClassDB::bind_method(D_METHOD("system_get_parameter", "name"), &Fmod::getGlobalParameter);
+	ClassDB::bind_method(D_METHOD("system_set_parameter_by_name", "name", "value"), &Fmod::setGlobalParameterByName);
+	ClassDB::bind_method(D_METHOD("system_get_parameter_by_name", "name"), &Fmod::getGlobalParameterByName);
+	ClassDB::bind_method(D_METHOD("system_set_parameter_by_id", "id_pair", "value"), &Fmod::setGlobalParameterByID);
+	ClassDB::bind_method(D_METHOD("system_get_parameter_by_id", "id_pair"), &Fmod::getGlobalParameterByID);
+
 	ClassDB::bind_method(D_METHOD("system_set_sound_3d_settings", "dopplerScale", "distanceFactor", "rollOffScale"), &Fmod::setSound3DSettings);
 	ClassDB::bind_method(D_METHOD("system_get_available_drivers"), &Fmod::getAvailableDrivers);
 	ClassDB::bind_method(D_METHOD("system_get_driver"), &Fmod::getDriver);

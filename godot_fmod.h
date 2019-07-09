@@ -107,8 +107,10 @@ public:
 	void setSoftwareFormat(int sampleRate, int speakerMode, int numRawSpeakers);
 	void setSound3DSettings(float dopplerScale, float distanceFactor, float rollOffScale);
 	uint64_t getEvent(const String &path);
-	void setGlobalParameter(const String &parameterName, float value);
-	float getGlobalParameter(const String &parameterName);
+	void setGlobalParameterByName(const String &parameterName, float value);
+	float getGlobalParameterByName(const String &parameterName);
+	void setGlobalParameterByID(const Array &idPair, float value);
+	float getGlobalParameterByID(const Array &idPair);
 	Array getAvailableDrivers();
 	int getDriver();
 	void setDriver(int id);
