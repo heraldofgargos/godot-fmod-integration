@@ -1238,6 +1238,28 @@ void Fmod::setSound3DSettings(float dopplerScale, float distanceFactor, float ro
 	}
 }
 
+int Fmod::getSystemNumListeners() {
+	return listeners.size();
+}
+
+float Fmod::getSystemListenerWeight(int index) {
+	if (!listeners.has(index)) {
+		print_error("FMOD Sound System: Invalid listener ID");
+		return -1;
+	}
+	float weight = 0;
+	checkErrors(system->getListenerWeight(index, &weight));
+	return weight;
+}
+
+void Fmod::setSystemListenerWeight(int index, float weight) {
+	if (!listeners.has(index)) {
+		print_error("FMOD Sound System: Invalid listener ID");
+		return;
+	}
+	checkErrors(system->setListenerWeight(index, weight));
+}
+
 uint64_t Fmod::getEvent(const String &path) {
 	if (!eventDescriptions.has(path)) {
 		FMOD::Studio::EventDescription *desc = nullptr;
@@ -1415,6 +1437,9 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("system_get_parameter_desc_by_id", "id_pair"), &Fmod::getGlobalParameterDescByID);
 	ClassDB::bind_method(D_METHOD("system_get_parameter_desc_count"), &Fmod::getGlobalParameterDescCount);
 	ClassDB::bind_method(D_METHOD("system_get_parameter_desc_list"), &Fmod::getGlobalParameterDescList);
+	ClassDB::bind_method(D_METHOD("system_get_num_listeners"), &Fmod::getSystemNumListeners);
+	ClassDB::bind_method(D_METHOD("system_get_listener_weight", "index"), &Fmod::getSystemListenerWeight);
+	ClassDB::bind_method(D_METHOD("system_set_listener_weight", "index", "weight"), &Fmod::setSystemListenerWeight);
 
 	ClassDB::bind_method(D_METHOD("system_set_sound_3d_settings", "dopplerScale", "distanceFactor", "rollOffScale"), &Fmod::setSound3DSettings);
 	ClassDB::bind_method(D_METHOD("system_get_available_drivers"), &Fmod::getAvailableDrivers);

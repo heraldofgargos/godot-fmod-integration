@@ -107,6 +107,9 @@ public:
 	void removeListener(uint32_t index);
 	void setSoftwareFormat(int sampleRate, int speakerMode, int numRawSpeakers);
 	void setSound3DSettings(float dopplerScale, float distanceFactor, float rollOffScale);
+	int getSystemNumListeners();
+	float getSystemListenerWeight(int index);
+	void setSystemListenerWeight(int index, float weight);
 	uint64_t getEvent(const String &path);
 	void setGlobalParameterByName(const String &parameterName, float value);
 	float getGlobalParameterByName(const String &parameterName);
