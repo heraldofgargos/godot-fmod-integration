@@ -110,6 +110,8 @@ public:
 	int getSystemNumListeners();
 	float getSystemListenerWeight(int index);
 	void setSystemListenerWeight(int index, float weight);
+	Dictionary getSystemListener3DAttributes(int index);
+	void setSystemListener3DAttributes(int index, Vector3 forward, Vector3 position, Vector3 up, Vector3 velocity);
 	uint64_t getEvent(const String &path);
 	void setGlobalParameterByName(const String &parameterName, float value);
 	float getGlobalParameterByName(const String &parameterName);

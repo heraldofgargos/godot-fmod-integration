@@ -1260,6 +1260,38 @@ void Fmod::setSystemListenerWeight(int index, float weight) {
 	checkErrors(system->setListenerWeight(index, weight));
 }
 
+Dictionary Fmod::getSystemListener3DAttributes(int index) {
+	if (!listeners.has(index)) {
+		print_error("FMOD Sound System: Invalid listener ID");
+		return Dictionary();
+	}
+	FMOD_3D_ATTRIBUTES attr;
+	checkErrors(system->getListenerAttributes(index, &attr));
+	Dictionary _3Dattr;
+	Vector3 forward(attr.forward.x, attr.forward.y, attr.forward.z);
+	Vector3 up(attr.up.x, attr.up.y, attr.up.z);
+	Vector3 position(attr.position.x, attr.position.y, attr.position.z);
+	Vector3 velocity(attr.velocity.x, attr.velocity.y, attr.velocity.z);
+	_3Dattr["forward"] = forward;
+	_3Dattr["position"] = position;
+	_3Dattr["up"] = up;
+	_3Dattr["velocity"] = velocity;
+	return _3Dattr;
+}
+
+void Fmod::setSystemListener3DAttributes(int index, Vector3 forward, Vector3 position, Vector3 up, Vector3 velocity) {
+	if (!listeners.has(index)) {
+		print_error("FMOD Sound System: Invalid listener ID");
+		return;
+	}
+	FMOD_3D_ATTRIBUTES attr;
+	attr.forward = toFmodVector(forward);
+	attr.position = toFmodVector(position);
+	attr.up = toFmodVector(up);
+	attr.velocity = toFmodVector(velocity);
+	checkErrors(system->setListenerAttributes(index, &attr));
+}
+
 uint64_t Fmod::getEvent(const String &path) {
 	if (!eventDescriptions.has(path)) {
 		FMOD::Studio::EventDescription *desc = nullptr;
@@ -1440,6 +1472,8 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("system_get_num_listeners"), &Fmod::getSystemNumListeners);
 	ClassDB::bind_method(D_METHOD("system_get_listener_weight", "index"), &Fmod::getSystemListenerWeight);
 	ClassDB::bind_method(D_METHOD("system_set_listener_weight", "index", "weight"), &Fmod::setSystemListenerWeight);
+	ClassDB::bind_method(D_METHOD("system_get_listener_attributes", "index"), &Fmod::getSystemListener3DAttributes);
+	ClassDB::bind_method(D_METHOD("system_set_listener_attributes", "index", "forward", "position", "up", "velocity"), &Fmod::setSystemListener3DAttributes);
 
 	ClassDB::bind_method(D_METHOD("system_set_sound_3d_settings", "dopplerScale", "distanceFactor", "rollOffScale"), &Fmod::setSound3DSettings);
 	ClassDB::bind_method(D_METHOD("system_get_available_drivers"), &Fmod::getAvailableDrivers);
