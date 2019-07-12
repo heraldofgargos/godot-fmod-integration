@@ -126,7 +126,7 @@ void Fmod::setListenerAttributes() {
 			Vector3 pos(posVector.x, 0.0f, posVector.y),
 					up(0, 1, 0), forward(0, 0, 1), vel(0, 0, 0); // TODO: add doppler
 			FMOD_3D_ATTRIBUTES attr = get3DAttributes(toFmodVector(pos), toFmodVector(up), toFmodVector(forward), toFmodVector(vel));
-			checkErrors(system->setListenerAttributes(fmodListenerIndex, &attr));
+			if (!listener.listenerLock) checkErrors(system->setListenerAttributes(fmodListenerIndex, &attr));
 
 		} else { // Listener is in 3D space
 			// needs testing
@@ -137,7 +137,7 @@ void Fmod::setListenerAttributes() {
 			Vector3 forward = t.get_basis().elements[2];
 			Vector3 vel(0, 0, 0);
 			FMOD_3D_ATTRIBUTES attr = get3DAttributes(toFmodVector(pos), toFmodVector(up), toFmodVector(forward), toFmodVector(vel));
-			checkErrors(system->setListenerAttributes(fmodListenerIndex, &attr));
+			if (!listener.listenerLock) checkErrors(system->setListenerAttributes(fmodListenerIndex, &attr));
 		}
 		fmodListenerIndex++;
 	}
@@ -342,6 +342,23 @@ Dictionary Fmod::getPerformanceData() {
 	performanceData["file"] = filePerfData;
 
 	return performanceData;
+}
+
+void Fmod::setListenerLock(uint32_t index, bool isLocked) {
+	if (!listeners.has(index)) {
+		print_error("FMOD Sound System: Invalid listener ID");
+		return;
+	}
+	Listener *listener = &listeners.find(index)->get();
+	listener->listenerLock = isLocked;
+}
+
+bool Fmod::getListenerLock(uint32_t index) {
+	if (!listeners.has(index)) {
+		print_error("FMOD Sound System: Invalid listener ID");
+		return false;
+	}
+	return listeners.find(index)->get().listenerLock;
 }
 
 void Fmod::waitForAllLoads() {
@@ -1493,13 +1510,14 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("system_set_listener_weight", "index", "weight"), &Fmod::setSystemListenerWeight);
 	ClassDB::bind_method(D_METHOD("system_get_listener_attributes", "index"), &Fmod::getSystemListener3DAttributes);
 	ClassDB::bind_method(D_METHOD("system_set_listener_attributes", "index", "forward", "position", "up", "velocity"), &Fmod::setSystemListener3DAttributes);
-
 	ClassDB::bind_method(D_METHOD("system_set_sound_3d_settings", "dopplerScale", "distanceFactor", "rollOffScale"), &Fmod::setSound3DSettings);
 	ClassDB::bind_method(D_METHOD("system_get_available_drivers"), &Fmod::getAvailableDrivers);
 	ClassDB::bind_method(D_METHOD("system_get_driver"), &Fmod::getDriver);
 	ClassDB::bind_method(D_METHOD("system_set_driver", "id"), &Fmod::setDriver);
 	ClassDB::bind_method(D_METHOD("system_get_performance_data"), &Fmod::getPerformanceData);
 	ClassDB::bind_method(D_METHOD("system_get_event", "path"), &Fmod::getEvent);
+	ClassDB::bind_method(D_METHOD("system_set_listener_lock", "index", "is_locked"), &Fmod::setListenerLock);
+	ClassDB::bind_method(D_METHOD("system_get_listener_lock", "index"), &Fmod::getListenerLock);
 
 	/* Integration helper functions */
 	ClassDB::bind_method(D_METHOD("create_event_instance", "event_path"), &Fmod::createEventInstance);

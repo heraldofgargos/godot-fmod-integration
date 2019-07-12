@@ -131,6 +131,8 @@ public:
 	int getDriver();
 	void setDriver(int id);
 	Dictionary getPerformanceData();
+	void setListenerLock(uint32_t index, bool isLocked);
+	bool getListenerLock(uint32_t index);
 
 	/* Helper functions */
 	uint64_t createEventInstance(const String &eventPath);
