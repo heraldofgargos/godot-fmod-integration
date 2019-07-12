@@ -103,20 +103,20 @@ void Fmod::shutdown() {
 void Fmod::setListenerAttributes() {
 	if (listeners.size() == 0) {
 		if (listenerWarning) {
-			print_error("FMOD Sound System: Listener not set!");
+			print_error("FMOD Sound System: No listeners are set!");
 			listenerWarning = false;
 		}
 		return;
 	}
+
+	clearNullListeners();
+
+	int fmodListenerIndex = 0;
 	for (auto e = listeners.front(); e; e = e->next()) {
 		auto index = e->key();
 		auto listener = e->value();
 
-		if (isNull(listener)) {
-			continue;
-		}
-
-		CanvasItem *ci = Object::cast_to<CanvasItem>(listener);
+		CanvasItem *ci = Object::cast_to<CanvasItem>(listener.gameObj);
 		if (ci != nullptr) { // Listener is in 2D space
 			Transform2D t2d = ci->get_transform();
 			Vector2 posVector = t2d.get_origin() / distanceScale;
@@ -126,29 +126,35 @@ void Fmod::setListenerAttributes() {
 			Vector3 pos(posVector.x, 0.0f, posVector.y),
 					up(0, 1, 0), forward(0, 0, 1), vel(0, 0, 0); // TODO: add doppler
 			FMOD_3D_ATTRIBUTES attr = get3DAttributes(toFmodVector(pos), toFmodVector(up), toFmodVector(forward), toFmodVector(vel));
-			checkErrors(system->setListenerAttributes(index, &attr));
+			checkErrors(system->setListenerAttributes(fmodListenerIndex, &attr));
 
 		} else { // Listener is in 3D space
 			// needs testing
-			Spatial *s = Object::cast_to<Spatial>(listener);
+			Spatial *s = Object::cast_to<Spatial>(listener.gameObj);
 			Transform t = s->get_transform();
 			Vector3 pos = t.get_origin() / distanceScale;
 			Vector3 up = t.get_basis().elements[1];
 			Vector3 forward = t.get_basis().elements[2];
 			Vector3 vel(0, 0, 0);
 			FMOD_3D_ATTRIBUTES attr = get3DAttributes(toFmodVector(pos), toFmodVector(up), toFmodVector(forward), toFmodVector(vel));
-			checkErrors(system->setListenerAttributes(index, &attr));
+			checkErrors(system->setListenerAttributes(fmodListenerIndex, &attr));
 		}
+		fmodListenerIndex++;
 	}
 }
 
-int Fmod::addListener(Object *gameObj) {
+int Fmod::addListener(uint32_t index, Object *gameObj) {
 	if (listeners.size() == FMOD_MAX_LISTENERS) {
 		print_error("FMOD Sound System: Could not add listener. System already at max listeners.");
 		return -1;
 	}
-	auto index = listeners.size();
-	listeners.insert(index, gameObj);
+	if (listeners.has(index)) {
+		print_error("FMOD Sound System: Could not add listener. Duplicate listener ID.");
+		return -1;
+	}
+	Listener listener;
+	listener.gameObj = gameObj;
+	listeners.insert(index, listener);
 	checkErrors(system->setNumListeners(listeners.size()));
 	return index;
 }
@@ -159,8 +165,8 @@ void Fmod::removeListener(uint32_t index) {
 		return;
 	}
 	listeners.erase(index);
-	checkErrors(system->setNumListeners(listeners.size()));
-	std::string s = "FMOD Sound System: Listener at index " + std::to_string(index) + " was removed";
+	checkErrors(system->setNumListeners(listeners.size() == 0 ? 1 : listeners.size()));
+	std::string s = "FMOD Sound System: Listener " + std::to_string(index) + " was removed";
 	print_line(s.c_str());
 }
 
@@ -763,6 +769,16 @@ void Fmod::releaseOneEvent(FMOD::Studio::EventInstance *eventInstance) {
 	Callbacks::mut->unlock();
 }
 
+void Fmod::clearNullListeners() {
+	std::vector<uint32_t> queue;
+	for (auto e = listeners.front(); e; e = e->next()) {
+		if (isNull(e->value().gameObj))
+			queue.push_back(e->key());
+	}
+	for (int i = 0; i < queue.size(); i++)
+		removeListener(queue[i]);
+}
+
 void Fmod::startEvent(uint64_t instanceId) {
 	if (!events.has(instanceId)) return;
 	auto i = events.find(instanceId);
@@ -936,7 +952,10 @@ void Fmod::stopAllBusEvents(const String &busPath, int stopMode) {
 
 int Fmod::checkErrors(FMOD_RESULT result) {
 	if (result != FMOD_OK) {
-		print_error(FMOD_ErrorString(result));
+		String err_prefix = "FMOD Sound System: ";
+		String fmod_err(FMOD_ErrorString(result));
+		String err = err_prefix + fmod_err;
+		print_error(err.ascii().get_data());
 		return 0;
 	}
 	return 1;
@@ -1458,7 +1477,7 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("system_init", "num_of_channels", "studio_flags", "flags"), &Fmod::init);
 	ClassDB::bind_method(D_METHOD("system_update"), &Fmod::update);
 	ClassDB::bind_method(D_METHOD("system_shutdown"), &Fmod::shutdown);
-	ClassDB::bind_method(D_METHOD("system_add_listener", "node"), &Fmod::addListener);
+	ClassDB::bind_method(D_METHOD("system_add_listener", "index", "node"), &Fmod::addListener);
 	ClassDB::bind_method(D_METHOD("system_remove_listener", "index"), &Fmod::removeListener);
 	ClassDB::bind_method(D_METHOD("system_set_software_format", "sample_rate", "speaker_mode", "num_raw_speakers"), &Fmod::setSoftwareFormat);
 	ClassDB::bind_method(D_METHOD("system_set_parameter_by_name", "name", "value"), &Fmod::setGlobalParameterByName);
