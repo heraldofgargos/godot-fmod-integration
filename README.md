@@ -39,8 +39,8 @@ func _ready():
 	Fmod.bank_load("./Banks/Desktop/Master Bank.bank", Fmod.FMOD_STUDIO_LOAD_BANK_NORMAL)
 	Fmod.bank_load("./Banks/Desktop/Master Bank.strings.bank", Fmod.FMOD_STUDIO_LOAD_BANK_NORMAL)
 
-	# register listener
-	Fmod.system_add_listener($Listener)
+	# register a listener
+	Fmod.system_add_listener(0, $Listener)
 
 	# play some events
 	Fmod.play_one_shot("event:/Footstep", $SoundSource1)
