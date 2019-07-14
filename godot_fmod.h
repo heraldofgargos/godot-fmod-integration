@@ -72,7 +72,7 @@ private:
 		Object *gameObj = nullptr;
 		bool listenerLock = false;
 	};
-	Map<uint32_t, Listener> listeners;
+	std::vector<Listener> listeners;
 
 	Map<String, FMOD::Studio::Bank *> banks;
 	Map<String, FMOD::Studio::EventDescription *> eventDescriptions;
@@ -109,7 +109,7 @@ public:
 	void init(int numOfChannels, int studioFlags, int flags);
 	void update();
 	void shutdown();
-	int addListener(uint32_t index, Object *gameObj);
+	void addListener(Object *gameObj);
 	void removeListener(uint32_t index);
 	void setSoftwareFormat(int sampleRate, int speakerMode, int numRawSpeakers);
 	void setSound3DSettings(float dopplerScale, float distanceFactor, float rollOffScale);
