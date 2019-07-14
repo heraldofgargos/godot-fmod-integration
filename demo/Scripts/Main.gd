@@ -2,7 +2,7 @@ extends Node2D
 
 func _ready():
 	# register a listener
-	Fmod.system_add_listener(0, $Listener)
+	Fmod.system_add_listener($Listener)
 	
 	# play some events
 	# technically these are not one-shots but this is just for demo's sake
