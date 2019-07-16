@@ -149,10 +149,9 @@ void Fmod::addListener(Object *gameObj) {
 	listener.gameObj = gameObj;
 	listeners.push_back(listener);
 	checkErrors(system->setNumListeners(listeners.size()));
-	return;
 }
 
-void Fmod::removeListener(uint32_t index) {
+void Fmod::removeListener(uint8_t index) {
 	if (index < 0 || index + 1 > listeners.size()) {
 		print_error("FMOD Sound System: Invalid listener ID");
 		return;
@@ -296,7 +295,7 @@ int Fmod::getDriver() {
 	return driverId;
 }
 
-void Fmod::setDriver(int id) {
+void Fmod::setDriver(uint8_t id) {
 	checkErrors(coreSystem->setDriver(id));
 }
 
@@ -337,7 +336,7 @@ Dictionary Fmod::getPerformanceData() {
 	return performanceData;
 }
 
-void Fmod::setListenerLock(uint32_t index, bool isLocked) {
+void Fmod::setListenerLock(uint8_t index, bool isLocked) {
 	if (index < 0 || index + 1 > listeners.size()) {
 		print_error("FMOD Sound System: Invalid listener ID");
 		return;
@@ -346,7 +345,7 @@ void Fmod::setListenerLock(uint32_t index, bool isLocked) {
 	listener->listenerLock = isLocked;
 }
 
-bool Fmod::getListenerLock(uint32_t index) {
+bool Fmod::getListenerLock(uint8_t index) {
 	if (index < 0 || index + 1 > listeners.size()) {
 		print_error("FMOD Sound System: Invalid listener ID");
 		return false;
@@ -1278,7 +1277,7 @@ int Fmod::getSystemNumListeners() {
 	return listeners.size();
 }
 
-float Fmod::getSystemListenerWeight(int index) {
+float Fmod::getSystemListenerWeight(uint8_t index) {
 	if (index < 0 || index + 1 > listeners.size()) {
 		print_error("FMOD Sound System: Invalid listener ID");
 		return -1;
@@ -1288,7 +1287,7 @@ float Fmod::getSystemListenerWeight(int index) {
 	return weight;
 }
 
-void Fmod::setSystemListenerWeight(int index, float weight) {
+void Fmod::setSystemListenerWeight(uint8_t index, float weight) {
 	if (index < 0 || index + 1 > listeners.size()) {
 		print_error("FMOD Sound System: Invalid listener ID");
 		return;
@@ -1296,7 +1295,7 @@ void Fmod::setSystemListenerWeight(int index, float weight) {
 	checkErrors(system->setListenerWeight(index, weight));
 }
 
-Dictionary Fmod::getSystemListener3DAttributes(int index) {
+Dictionary Fmod::getSystemListener3DAttributes(uint8_t index) {
 	if (index < 0 || index + 1 > listeners.size()) {
 		print_error("FMOD Sound System: Invalid listener ID");
 		return Dictionary();
@@ -1315,7 +1314,7 @@ Dictionary Fmod::getSystemListener3DAttributes(int index) {
 	return _3Dattr;
 }
 
-void Fmod::setSystemListener3DAttributes(int index, Vector3 forward, Vector3 position, Vector3 up, Vector3 velocity) {
+void Fmod::setSystemListener3DAttributes(uint8_t index, Vector3 forward, Vector3 position, Vector3 up, Vector3 velocity) {
 	if (index < 0 || index + 1 > listeners.size()) {
 		print_error("FMOD Sound System: Invalid listener ID");
 		return;

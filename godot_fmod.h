@@ -69,7 +69,11 @@ private:
 	float distanceScale = 1.0f;
 
 	struct Listener {
+		// GameObject to which this listener is attached
 		Object *gameObj = nullptr;
+
+		// Locks the listener in place, disabling internal 3D attribute updates.
+		// 3D attributes can still be manually set with a set3DAttributes call.
 		bool listenerLock = false;
 	};
 	std::vector<Listener> listeners;
@@ -81,7 +85,7 @@ private:
 	Map<String, FMOD::Studio::VCA *> VCAs;
 	Map<uint64_t, FMOD::Studio::EventInstance *> events;
 
-	// for playing sounds using FMOD Core / Low Level
+	// For playing sounds using FMOD Core / Low Level
 	Map<uint64_t, FMOD::Sound *> sounds;
 	Map<FMOD::Sound *, FMOD::Channel *> channels;
 
@@ -110,14 +114,14 @@ public:
 	void update();
 	void shutdown();
 	void addListener(Object *gameObj);
-	void removeListener(uint32_t index);
+	void removeListener(uint8_t index);
 	void setSoftwareFormat(int sampleRate, int speakerMode, int numRawSpeakers);
 	void setSound3DSettings(float dopplerScale, float distanceFactor, float rollOffScale);
 	int getSystemNumListeners();
-	float getSystemListenerWeight(int index);
-	void setSystemListenerWeight(int index, float weight);
-	Dictionary getSystemListener3DAttributes(int index);
-	void setSystemListener3DAttributes(int index, Vector3 forward, Vector3 position, Vector3 up, Vector3 velocity);
+	float getSystemListenerWeight(uint8_t index);
+	void setSystemListenerWeight(uint8_t index, float weight);
+	Dictionary getSystemListener3DAttributes(uint8_t index);
+	void setSystemListener3DAttributes(uint8_t index, Vector3 forward, Vector3 position, Vector3 up, Vector3 velocity);
 	uint64_t getEvent(const String &path);
 	void setGlobalParameterByName(const String &parameterName, float value);
 	float getGlobalParameterByName(const String &parameterName);
@@ -129,10 +133,10 @@ public:
 	Array getGlobalParameterDescList();
 	Array getAvailableDrivers();
 	int getDriver();
-	void setDriver(int id);
+	void setDriver(uint8_t id);
 	Dictionary getPerformanceData();
-	void setListenerLock(uint32_t index, bool isLocked);
-	bool getListenerLock(uint32_t index);
+	void setListenerLock(uint8_t index, bool isLocked);
+	bool getListenerLock(uint8_t index);
 
 	/* Helper functions */
 	uint64_t createEventInstance(const String &eventPath);
