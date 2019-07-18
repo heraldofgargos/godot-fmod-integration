@@ -2,8 +2,6 @@
 
 A Godot C++ module that provides an integration and GDScript bindings for the FMOD Studio API.
 
-FMOD is an audio engine and middleware solution for interactive audio in games. It has been the audio engine behind many titles such as Transistor, Into the Breach and Celeste. [More on FMOD's website](https://www.fmod.com/).
-
 This module exposes most of the Studio API functions to Godot's GDScript and also provides helpers for performing common functions like attaching Studio events to Godot nodes and playing 3D/positional audio. _It is still very much a work in progress and some API functions are not yet exposed._ Feel free to tweak/extend it based on your project's needs.
 
 ### Latest release
@@ -19,6 +17,14 @@ Precompiled engine binaries for Windows, macOS and Linux with FMOD Studio alread
 If you wish to compile the module yourself, build instructions are available [here](https://github.com/alexfonseka/godot-fmod-integration/blob/master/docs/building.md).
 
 ## Using the module
+
+- [Basic usage](https://github.com/alexfonseka/godot-fmod-integration#basic-usage)
+- [Calling Studio events](https://github.com/alexfonseka/godot-fmod-integration#calling-studio-events)
+- [Using the integration helpers](https://github.com/alexfonseka/godot-fmod-integration#using-the-integration-helpers)
+- [Timeline marker & music beat callbacks](https://github.com/alexfonseka/godot-fmod-integration#timeline-marker--music-beat-callbacks)
+- [Playing sounds using FMOD Core / Low Level API](https://github.com/alexfonseka/godot-fmod-integration#playing-sounds-using-fmod-core--low-level-api)
+- [Changing the default audio output device](https://github.com/alexfonseka/godot-fmod-integration#changing-the-default-audio-output-device)
+- [Profiling & querying performance data](https://github.com/alexfonseka/godot-fmod-integration#profiling--querying-performance-data)
 
 ### Basic usage
 
