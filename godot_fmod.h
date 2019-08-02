@@ -72,7 +72,7 @@ private:
 		// GameObject to which this listener is attached
 		Object *gameObj = nullptr;
 
-		// Locks the listener in place, disabling internal 3D attribute updates.
+		// When true, locks the listener in place, disabling internal 3D attribute updates.
 		// 3D attributes can still be manually set with a set3DAttributes call.
 		bool listenerLock = false;
 	};
@@ -93,7 +93,6 @@ private:
 	FMOD_VECTOR toFmodVector(Vector3 vec);
 	void setListenerAttributes();
 	void updateInstance3DAttributes(FMOD::Studio::EventInstance *i, Object *o);
-	int checkErrors(FMOD_RESULT result);
 	bool isNull(Object *o);
 	void loadBus(const String &busPath);
 	void loadVCA(const String &VCAPath);
@@ -103,6 +102,8 @@ private:
 	EventInfo *getEventInfo(FMOD::Studio::EventInstance *eventInstance);
 	void releaseOneEvent(FMOD::Studio::EventInstance *eventInstance);
 	void clearNullListeners();
+
+	inline int checkErrors(FMOD_RESULT result);
 
 protected:
 	static Fmod *singleton;

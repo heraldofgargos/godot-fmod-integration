@@ -966,11 +966,9 @@ void Fmod::stopAllBusEvents(const String &busPath, int stopMode) {
 	checkErrors(bus->value()->stopAllEvents(m));
 }
 
-int Fmod::checkErrors(FMOD_RESULT result) {
+inline int Fmod::checkErrors(FMOD_RESULT result) {
 	if (result != FMOD_OK) {
-		String err_prefix = "FMOD Sound System: ";
-		String fmod_err(FMOD_ErrorString(result));
-		String err = err_prefix + fmod_err;
+		String err = String("FMOD Sound System: ") + String(FMOD_ErrorString(result));
 		print_error(err.ascii().get_data());
 		return 0;
 	}
