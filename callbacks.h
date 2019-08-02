@@ -35,18 +35,20 @@
 #include "api/studio/inc/fmod_studio.hpp"
 
 namespace Callbacks {
-struct CallbackInfo {
-	Dictionary markerCallbackInfo;
-	bool markerSignalEmitted = true;
 
-	Dictionary beatCallbackInfo;
-	bool beatSignalEmitted = true;
+	struct CallbackInfo {
+		Dictionary markerCallbackInfo;
+		bool markerSignalEmitted = true;
 
-	Dictionary soundCallbackInfo;
-	bool soundSignalEmitted = true;
-};
+		Dictionary beatCallbackInfo;
+		bool beatSignalEmitted = true;
 
-extern Mutex *mut;
+		Dictionary soundCallbackInfo;
+		bool soundSignalEmitted = true;
+	};
 
-FMOD_RESULT F_CALLBACK eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_STUDIO_EVENTINSTANCE *event, void *parameters);
+	extern Mutex *mut;
+
+	FMOD_RESULT F_CALLBACK eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_STUDIO_EVENTINSTANCE *event, void *parameters);
+
 } // namespace Callbacks
