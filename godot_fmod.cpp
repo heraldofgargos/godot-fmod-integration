@@ -44,6 +44,7 @@ void Fmod::init(int numOfChannels, int studioFlags, int flags) {
 }
 
 void Fmod::update() {
+	// clean up one shots
 	for (auto e = events.front(); e; e = e->next()) {
 		FMOD::Studio::EventInstance *eventInstance = e->get();
 		EventInfo *eventInfo = getEventInfo(eventInstance);
@@ -57,6 +58,9 @@ void Fmod::update() {
 			updateInstance3DAttributes(eventInstance, eventInfo->gameObj);
 		}
 	}
+
+	// clean up invalid channel references
+	clearChannelRefs();
 
 	// update listener position
 	setListenerAttributes();
@@ -795,6 +799,21 @@ void Fmod::clearNullListeners() {
 	checkErrors(system->setNumListeners(listeners.size() == 0 ? 1 : listeners.size()));
 }
 
+void Fmod::clearChannelRefs() {
+	if (channels.size() == 0) return;
+
+	std::vector<uint64_t> refs;
+	for (auto e = channels.front(); e; e = e->next()) {
+		// Check if the channel is valid by calling any of its getters
+		bool isPaused = false;
+		FMOD_RESULT res = e->get()->getPaused(&isPaused);
+		if (res != FMOD_OK)
+			refs.push_back(e->key());
+	}
+	for (auto ref : refs)
+		channels.erase(ref);
+}
+
 void Fmod::startEvent(uint64_t instanceId) {
 	if (!events.has(instanceId)) return;
 	auto i = events.find(instanceId);
@@ -1164,34 +1183,37 @@ void Fmod::setVCAVolume(const String &VCAPath, float volume) {
 	checkErrors(vca->value()->setVolume(volume));
 }
 
-void Fmod::playSound(uint64_t instanceId) {
-	if (sounds.has(instanceId)) {
-		auto s = sounds.find(instanceId)->value();
-		auto c = channels.find(s)->value();
-		checkErrors(c->setPaused(false));
+uint64_t Fmod::playSound(uint64_t handle) {
+	if (sounds.has(handle)) {
+		auto s = sounds.find(handle)->value();
+		FMOD::Channel *channel = nullptr;
+		checkErrors(coreSystem->playSound(s, nullptr, true, &channel));
+		if (channel) {
+			checkErrors(channel->setPaused(false));
+			channels.insert((uint64_t)channel, channel);
+			return (uint64_t)channel;
+		}
 	}
+	return 0;
 }
 
-void Fmod::setSoundPaused(uint64_t instanceId, bool paused) {
-	if (sounds.has(instanceId)) {
-		auto s = sounds.find(instanceId)->value();
-		auto c = channels.find(s)->value();
+void Fmod::setSoundPaused(uint64_t channelHandle, bool paused) {
+	if (channels.has(channelHandle)) {
+		auto c = channels.find(channelHandle)->value();
 		checkErrors(c->setPaused(paused));
 	}
 }
 
-void Fmod::stopSound(uint64_t instanceId) {
-	if (sounds.has(instanceId)) {
-		auto s = sounds.find(instanceId)->value();
-		auto c = channels.find(s)->value();
+void Fmod::stopSound(uint64_t channelHandle) {
+	if (channels.has(channelHandle)) {
+		auto c = channels.find(channelHandle)->value();
 		checkErrors(c->stop());
 	}
 }
 
-bool Fmod::isSoundPlaying(uint64_t instanceId) {
-	if (sounds.has(instanceId)) {
-		auto s = sounds.find(instanceId)->value();
-		auto c = channels.find(s)->value();
+bool Fmod::isSoundPlaying(uint64_t channelHandle) {
+	if (channels.has(channelHandle)) {
+		auto c = channels.find(channelHandle)->value();
 		bool isPlaying = false;
 		checkErrors(c->isPlaying(&isPlaying));
 		return isPlaying;
@@ -1199,18 +1221,16 @@ bool Fmod::isSoundPlaying(uint64_t instanceId) {
 	return false;
 }
 
-void Fmod::setSoundVolume(uint64_t instanceId, float volume) {
-	if (sounds.has(instanceId)) {
-		auto s = sounds.find(instanceId)->value();
-		auto c = channels.find(s)->value();
+void Fmod::setSoundVolume(uint64_t channelHandle, float volume) {
+	if (channels.has(channelHandle)) {
+		auto c = channels.find(channelHandle)->value();
 		checkErrors(c->setVolume(volume));
 	}
 }
 
-float Fmod::getSoundVolume(uint64_t instanceId) {
-	if (sounds.has(instanceId)) {
-		auto s = sounds.find(instanceId)->value();
-		auto c = channels.find(s)->value();
+float Fmod::getSoundVolume(uint64_t channelHandle) {
+	if (channels.has(channelHandle)) {
+		auto c = channels.find(channelHandle)->value();
 		float volume = 0.f;
 		checkErrors(c->getVolume(&volume));
 		return volume;
@@ -1218,10 +1238,9 @@ float Fmod::getSoundVolume(uint64_t instanceId) {
 	return 0.f;
 }
 
-float Fmod::getSoundPitch(uint64_t instanceId) {
-	if (sounds.has(instanceId)) {
-		auto s = sounds.find(instanceId)->value();
-		auto c = channels.find(s)->value();
+float Fmod::getSoundPitch(uint64_t channelHandle) {
+	if (channels.has(channelHandle)) {
+		auto c = channels.find(channelHandle)->value();
 		float pitch = 0.f;
 		checkErrors(c->getPitch(&pitch));
 		return pitch;
@@ -1229,36 +1248,33 @@ float Fmod::getSoundPitch(uint64_t instanceId) {
 	return 0.f;
 }
 
-void Fmod::setSoundPitch(uint64_t instanceId, float pitch) {
-	if (sounds.has(instanceId)) {
-		auto s = sounds.find(instanceId)->value();
-		auto c = channels.find(s)->value();
+void Fmod::setSoundPitch(uint64_t channelHandle, float pitch) {
+	if (channels.has(channelHandle)) {
+		auto c = channels.find(channelHandle)->value();
 		checkErrors(c->setPitch(pitch));
 	}
 }
 
-uint64_t Fmod::loadSound(const String &path, int mode) {
+uint64_t Fmod::createSound(const String &path, int mode) {
 	FMOD::Sound *sound = nullptr;
 	checkErrors(coreSystem->createSound(path.ascii().get_data(), mode, nullptr, &sound));
 	if (sound) {
-		uint64_t instanceId = (uint64_t)sound;
-		sounds.insert(instanceId, sound);
-		FMOD::Channel *channel = nullptr;
-		checkErrors(coreSystem->playSound(sound, nullptr, true, &channel));
-		if (channel) {
-			channels.insert(sound, channel);
-			return instanceId;
-		}
+		checkErrors(sound->setLoopCount(0));
+		sounds.insert((uint64_t)sound, sound);
 	}
-	return 0;
+
+	return (uint64_t)sound;
 }
 
-void Fmod::releaseSound(uint64_t instanceId) {
-	if (!sounds.has(instanceId)) return; // sound is not loaded
-	auto sound = sounds.find(instanceId);
+void Fmod::releaseSound(uint64_t handle) {
+	if (!sounds.has(handle)) {
+		print_error("FMOD Sound System: Invalid handle");
+		return;
+	}
+	auto sound = sounds.find(handle);
 	if (sound->value()) {
 		checkErrors(sound->value()->release());
-		sounds.erase(instanceId);
+		sounds.erase(handle);
 	}
 }
 
@@ -1608,16 +1624,16 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("vca_set_volume", "path_to_vca", "volume"), &Fmod::setVCAVolume);
 
 	/* Sound functions */
-	ClassDB::bind_method(D_METHOD("sound_load", "path_to_sound", "mode"), &Fmod::loadSound);
-	ClassDB::bind_method(D_METHOD("sound_play", "id"), &Fmod::playSound);
-	ClassDB::bind_method(D_METHOD("sound_stop", "id"), &Fmod::stopSound);
-	ClassDB::bind_method(D_METHOD("sound_release", "id"), &Fmod::releaseSound);
-	ClassDB::bind_method(D_METHOD("sound_set_paused", "id", "paused"), &Fmod::setSoundPaused);
-	ClassDB::bind_method(D_METHOD("sound_is_playing", "id"), &Fmod::isSoundPlaying);
-	ClassDB::bind_method(D_METHOD("sound_set_volume", "id", "volume"), &Fmod::setSoundVolume);
-	ClassDB::bind_method(D_METHOD("sound_get_volume", "id"), &Fmod::getSoundVolume);
-	ClassDB::bind_method(D_METHOD("sound_set_pitch", "id", "pitch"), &Fmod::setSoundPitch);
-	ClassDB::bind_method(D_METHOD("sound_get_pitch", "id"), &Fmod::getSoundPitch);
+	ClassDB::bind_method(D_METHOD("sound_create", "path_to_sound", "mode"), &Fmod::createSound);
+	ClassDB::bind_method(D_METHOD("sound_play", "handle"), &Fmod::playSound);
+	ClassDB::bind_method(D_METHOD("sound_stop", "handle"), &Fmod::stopSound);
+	ClassDB::bind_method(D_METHOD("sound_release", "handle"), &Fmod::releaseSound);
+	ClassDB::bind_method(D_METHOD("sound_set_paused", "channel_handle", "paused"), &Fmod::setSoundPaused);
+	ClassDB::bind_method(D_METHOD("sound_is_playing", "channel_handle"), &Fmod::isSoundPlaying);
+	ClassDB::bind_method(D_METHOD("sound_set_volume", "channel_handle", "volume"), &Fmod::setSoundVolume);
+	ClassDB::bind_method(D_METHOD("sound_get_volume", "channel_handle"), &Fmod::getSoundVolume);
+	ClassDB::bind_method(D_METHOD("sound_set_pitch", "channel_handle", "pitch"), &Fmod::setSoundPitch);
+	ClassDB::bind_method(D_METHOD("sound_get_pitch", "channel_handle"), &Fmod::getSoundPitch);
 
 	/* Event Callback Signals */
 	ADD_SIGNAL(MethodInfo("timeline_beat", PropertyInfo(Variant::DICTIONARY, "params")));

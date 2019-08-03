@@ -87,7 +87,7 @@ private:
 
 	// For playing sounds using FMOD Core / Low Level
 	Map<uint64_t, FMOD::Sound *> sounds;
-	Map<FMOD::Sound *, FMOD::Channel *> channels;
+	Map<uint64_t, FMOD::Channel *> channels;
 
 	FMOD_3D_ATTRIBUTES get3DAttributes(FMOD_VECTOR pos, FMOD_VECTOR up, FMOD_VECTOR forward, FMOD_VECTOR vel);
 	FMOD_VECTOR toFmodVector(Vector3 vec);
@@ -102,6 +102,7 @@ private:
 	EventInfo *getEventInfo(FMOD::Studio::EventInstance *eventInstance);
 	void releaseOneEvent(FMOD::Studio::EventInstance *eventInstance);
 	void clearNullListeners();
+	void clearChannelRefs();
 
 	inline int checkErrors(FMOD_RESULT result);
 
@@ -231,16 +232,17 @@ public:
 	void setVCAVolume(const String &VCAPath, float volume);
 
 	/* FMOD Core Sound functions */
-	void playSound(uint64_t instanceId);
-	uint64_t loadSound(const String &path, int mode);
-	void releaseSound(uint64_t instanceId);
-	void setSoundPaused(uint64_t instanceId, bool paused);
-	void stopSound(uint64_t instanceId);
-	bool isSoundPlaying(uint64_t instanceId);
-	void setSoundVolume(uint64_t instanceId, float volume);
-	float getSoundVolume(uint64_t instanceId);
-	float getSoundPitch(uint64_t instanceId);
-	void setSoundPitch(uint64_t instanceId, float pitch);
+	uint64_t createSound(const String &path, int mode);
+	uint64_t playSound(uint64_t handle);
+	void releaseSound(uint64_t handle);
+	/* --- */
+	void setSoundPaused(uint64_t channelHandle, bool paused);
+	void stopSound(uint64_t channelHandle);
+	bool isSoundPlaying(uint64_t channelHandle);
+	void setSoundVolume(uint64_t channelHandle, float volume);
+	float getSoundVolume(uint64_t channelHandle);
+	float getSoundPitch(uint64_t channelHandle);
+	void setSoundPitch(uint64_t channelHandle, float pitch);
 
 	static Fmod *getSingleton();
 
