@@ -166,14 +166,16 @@ You can load and play any sound file in your project directory using the FMOD Lo
 
 ```gdscript
 # create a sound
-var my_sound = Fmod.sound_load("./ta-da.wav", Fmod.FMOD_DEFAULT)
+var my_sound = Fmod.sound_create("./ta-da.wav", Fmod.FMOD_DEFAULT)
 
-Fmod.sound_play(my_sound)
+# play the sound
+# this returns a handle to the channel
+var channel_id = Fmod.sound_play(my_sound)
 
 # wait a bit
 yield(sound_timer, "timeout")
 
-Fmod.sound_stop(my_sound)
+Fmod.sound_stop(channel_id)
 Fmod.sound_release(my_sound)
 ```
 
