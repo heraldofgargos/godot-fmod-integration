@@ -42,8 +42,8 @@ func _ready():
 
 	# load banks
 	# place your banks inside the project directory
-	Fmod.bank_load("./Banks/Desktop/Master Bank.bank", Fmod.FMOD_STUDIO_LOAD_BANK_NORMAL)
-	Fmod.bank_load("./Banks/Desktop/Master Bank.strings.bank", Fmod.FMOD_STUDIO_LOAD_BANK_NORMAL)
+	Fmod.bank_load("./Banks/Desktop/Master.bank", Fmod.FMOD_STUDIO_LOAD_BANK_NORMAL)
+	Fmod.bank_load("./Banks/Desktop/Master.strings.bank", Fmod.FMOD_STUDIO_LOAD_BANK_NORMAL)
 
 	# register a listener
 	Fmod.system_add_listener($Listener)
