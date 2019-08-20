@@ -231,7 +231,7 @@ public:
 	float getVCAVolume(const String &VCAPath);
 	void setVCAVolume(const String &VCAPath, float volume);
 
-	/* FMOD Core Sound functions */
+	/* Core (Low Level) Sound functions */
 	uint64_t createSound(const String &path, int mode);
 	uint64_t playSound(uint64_t handle);
 	void releaseSound(uint64_t handle);

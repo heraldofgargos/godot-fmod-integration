@@ -1623,7 +1623,7 @@ void Fmod::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("vca_get_volume", "path_to_vca"), &Fmod::getVCAVolume);
 	ClassDB::bind_method(D_METHOD("vca_set_volume", "path_to_vca", "volume"), &Fmod::setVCAVolume);
 
-	/* Sound functions */
+	/* Core (Low Level) Sound functions */
 	ClassDB::bind_method(D_METHOD("sound_create", "path_to_sound", "mode"), &Fmod::createSound);
 	ClassDB::bind_method(D_METHOD("sound_play", "handle"), &Fmod::playSound);
 	ClassDB::bind_method(D_METHOD("sound_stop", "handle"), &Fmod::stopSound);
