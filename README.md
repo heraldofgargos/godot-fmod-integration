@@ -38,7 +38,7 @@ func _ready():
 	# initializing with the LIVE_UPDATE flag lets you
 	# connect to Godot from the FMOD Studio editor
 	# and author events in realtime
-	Fmod.system_init(1024, Fmod.FMOD_STUDIO_INIT_LIVEUPDATE, Fmod.FMOD_INIT_NORMAL)
+	Fmod.system_init(1024, Fmod.FMOD_STUDIO_INIT_LIVEUPDATE, Fmod.FMOD_INIT_VOL0_BECOMES_VIRTUAL)
 
 	# load banks
 	# place your banks inside the project directory
@@ -112,7 +112,7 @@ Fmod.play_one_shot_attached("event:/Footstep", self)
 Fmod.play_one_shot_attached_with_params("event:/Footstep", self, { "Surface": 1.0, "Speed": 2.0 })
 
 # attaches a manually called instance to a Node
-# once attached 3D attributes are automatically set every frame (when update is called)
+# once attached, 3D attributes are automatically set every frame (when update is called)
 Fmod.attach_instance_to_node(event_instance, self)
 
 # detaches the instance from its Node
