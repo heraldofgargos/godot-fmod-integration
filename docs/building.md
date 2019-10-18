@@ -2,7 +2,7 @@
 
 To compile the module for a different version of Godot, follow these instructions. Precompiled engine binaries are available in the Releases tab but it is recommended to perform a recompilation of the engine with the version of Godot that is currently being used in your project.
 
-1. [Download the FMOD Studio API](https://www.fmod.com/download) (You need to create an account) and extract it somewhere on your system. This integration currently uses the 2.00.02 Early Access release.
+1. [Download the FMOD Studio API](https://www.fmod.com/download) (You need to create an account) and extract it somewhere on your system. This integration currently uses the 2.00.02 release but any 2.XX.XX version should be compatible.
 2. Clone the version of Godot currently being used in your project or simply clone the latest version from the [master branch](https://github.com/godotengine/godot).
 3. `cd` into the source directory and add the FMOD integration as a submodule into the `modules` directory `git submodule add https://github.com/alexfonseka/godot-fmod-integration modules/fmod`.
 4. Copy the contents of the `api` directory of the FMOD API into the module's `api` directory `modules/fmod/api`. On Windows this is (usually) found at `C:/Program Files (x86)/FMOD SoundSystem/FMOD Studio API Windows/api`.
