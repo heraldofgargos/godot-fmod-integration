@@ -3,7 +3,7 @@ extends Node
 func _ready():
 	# set up FMOD 
 	Fmod.system_set_software_format(0, Fmod.FMOD_SPEAKERMODE_STEREO, 0)
-	Fmod.system_init(1024, Fmod.FMOD_STUDIO_INIT_LIVEUPDATE, Fmod.FMOD_INIT_NORMAL)
+	Fmod.system_init(1024, Fmod.FMOD_STUDIO_INIT_LIVEUPDATE, Fmod.FMOD_INIT_VOL0_BECOMES_VIRTUAL)
 	
 	# load banks
 	Fmod.bank_load("./Banks/Desktop/Master.bank", Fmod.FMOD_STUDIO_LOAD_BANK_NORMAL)
