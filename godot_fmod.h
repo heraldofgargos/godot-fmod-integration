@@ -104,7 +104,14 @@ private:
 	void clearNullListeners();
 	void clearChannelRefs();
 
-	inline int checkErrors(FMOD_RESULT result);
+	inline int checkErrors(FMOD_RESULT result) {
+		if (result != FMOD_OK) {
+			String err = String("FMOD Sound System: ") + String(FMOD_ErrorString(result));
+			print_error(err.ascii().get_data());
+			return 0;
+		}
+		return 1;
+	}
 
 protected:
 	static Fmod *singleton;

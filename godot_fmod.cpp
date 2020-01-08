@@ -985,15 +985,6 @@ void Fmod::stopAllBusEvents(const String &busPath, int stopMode) {
 	checkErrors(bus->value()->stopAllEvents(m));
 }
 
-inline int Fmod::checkErrors(FMOD_RESULT result) {
-	if (result != FMOD_OK) {
-		String err = String("FMOD Sound System: ") + String(FMOD_ErrorString(result));
-		print_error(err.ascii().get_data());
-		return 0;
-	}
-	return 1;
-}
-
 bool Fmod::isNull(Object *o) {
 	CanvasItem *ci = Object::cast_to<CanvasItem>(o);
 	Spatial *s = Object::cast_to<Spatial>(o);

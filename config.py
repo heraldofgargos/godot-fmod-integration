@@ -4,14 +4,13 @@ def can_build(env, platform):
 
 def configure(env):
     if env["platform"] == "windows":
+        env.Append(LIBS=["fmod_vc", "fmodstudio_vc"])
         if env["bits"] == "32":
             env.Append(LIBPATH=["#modules/fmod/api/core/lib/x86/",
                                 "#modules/fmod/api/studio/lib/x86/"])
-            env.Append(LIBS=["fmod_vc", "fmodstudio_vc"])
         else:
             env.Append(LIBPATH=["#modules/fmod/api/core/lib/x64/",
                                 "#modules/fmod/api/studio/lib/x64/"])
-            env.Append(LIBS=["fmod64_vc", "fmodstudio64_vc"])
 
     elif env["platform"] == "x11":
         env.Append(LIBS=["fmod", "fmodstudio"])
@@ -31,11 +30,14 @@ def configure(env):
 
     elif env["platform"] == "android":
         if env["android_arch"] == "arm64v8":
-            env.Append(LIBPATH=["#modules/fmod/api/core/lib/arm64-v8a", "#modules/fmod/api/studio/lib/arm64-v8a"])
+            env.Append(LIBPATH=["#modules/fmod/api/core/lib/arm64-v8a",
+                                "#modules/fmod/api/studio/lib/arm64-v8a"])
         else:
-            env.Append(LIBPATH=["#modules/fmod/api/core/lib/armeabi-v7a", "#modules/fmod/api/studio/lib/armeabi-v7a"])
+            env.Append(LIBPATH=["#modules/fmod/api/core/lib/armeabi-v7a",
+                                "#modules/fmod/api/studio/lib/armeabi-v7a"])
         env.Append(LIBS=["fmod", "fmodstudio"])
 
     elif env["platform"] == "iphone":
-        env.Append(LIBPATH=["#modules/fmod/api/core/lib/", "#modules/fmod/api/studio/lib/"])
+        env.Append(LIBPATH=["#modules/fmod/api/core/lib/",
+                            "#modules/fmod/api/studio/lib/"])
         env.Append(LIBS=["libfmod_iphoneos.a", "libfmodstudio_iphoneos.a"])
