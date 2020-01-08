@@ -9,8 +9,7 @@ matrix:
       compiler: gcc
       addons:
         apt:
-          packages:
-            [scons, pkg-config, build-essential, p7zip-full]
+          packages: [scons, pkg-config, build-essential, p7zip-full]
       env: PLATFORM=x11 ADDITIONAL_FLAGS="tools=no use_llvm=yes target=release bits=64"
 
     - name: MacOS
@@ -70,19 +69,19 @@ install:
 
   - rm -rf api
   - mv .travis/download-fmod.sh ./ && chmod +x download-fmod.sh && ./download-fmod.sh $FMODUSER $FMODPASS $PLATFORM
-  - if [[ "$PLATFORM" == "x11" ]]; then tar -xvf fmodstudioapi20002linux.tar.gz; fi
-  - if [[ "$PLATFORM" == "osx" ]]; then hdiutil attach fmodstudioapi20002osx.dmg; fi
+  - if [[ "$PLATFORM" == "x11" ]]; then tar -xvf fmodstudioapi20006linux.tar.gz; fi
+  - if [[ "$PLATFORM" == "osx" ]]; then hdiutil attach fmodstudioapi20006osx.dmg; fi
   - if [[ "$PLATFORM" == "windows" ]]; then
-    7z x fmodstudioapi20002win-installer.exe;
+    7z x fmodstudioapi20006win-installer.exe;
     mv api/core/lib/x64/fmod_vc.lib api/core/lib/x64/fmod64_vc.windows.tools.64.lib;
     mv api/studio/lib/x64/fmodstudio_vc.lib api/studio/lib/x64/fmodstudio64_vc.windows.tools.64.lib;
     fi
-  - if [[ "$PLATFORM" == "iphone" ]]; then hdiutil attach fmodstudioapi20002ios.dmg; fi
-  - if [[ "$PLATFORM" == "android" ]]; then tar -xvf fmodstudioapi20002android.tar.gz; fi
-  - if [[ "$PLATFORM" == "x11" ]]; then mv fmodstudioapi20002linux/api ./; fi
+  - if [[ "$PLATFORM" == "iphone" ]]; then hdiutil attach fmodstudioapi20006ios.dmg; fi
+  - if [[ "$PLATFORM" == "android" ]]; then tar -xvf fmodstudioapi20006android.tar.gz; fi
+  - if [[ "$PLATFORM" == "x11" ]]; then mv fmodstudioapi20006linux/api ./; fi
   - if [[ "$PLATFORM" == "osx" ]]; then cp -r "/Volumes/FMOD Programmers API Mac/FMOD Programmers API/api" ./; fi
   - if [[ "$PLATFORM" == "iphone" ]]; then cp -r "/Volumes/FMOD Programmers API iOS/FMOD Programmers API/api" ./; fi
-  - if [[ "$PLATFORM" == "android" ]]; then mv fmodstudioapi20002android/api ./; fi
+  - if [[ "$PLATFORM" == "android" ]]; then mv fmodstudioapi20006android/api ./; fi
 
   - cd .. && git clone https://github.com/godotengine/godot.git && cd godot && git checkout 3.1.1-stable
   - mv ../godot-fmod-integration modules/fmod
@@ -134,12 +133,12 @@ deploy:
   api_key:
     secure: $TRAVIS_TOKEN
   file:
-    - "bin/godot.windows.tools.64.exe"
-    - "bin/godot.x11.opt.64.llvm"
-    - "bin/godot.osx.tools.64"
-    - "bin/libgodot.android_arm64-v8a.tar.gz"
-    - "bin/libgodot.android_armeabi-v7a.tar.gz"
-    - "bin/libgodot.iphone.opt.arm64.a"
+    - 'bin/godot.windows.tools.64.exe'
+    - 'bin/godot.x11.opt.64.llvm'
+    - 'bin/godot.osx.tools.64'
+    - 'bin/libgodot.android_arm64-v8a.tar.gz'
+    - 'bin/libgodot.android_armeabi-v7a.tar.gz'
+    - 'bin/libgodot.iphone.opt.arm64.a'
   skip_cleanup: true
   on:
     tags: true
