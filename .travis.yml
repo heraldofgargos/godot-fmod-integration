@@ -70,13 +70,13 @@ install:
   - rm -rf api
   - mv .travis/download-fmod.sh ./ && chmod +x download-fmod.sh && ./download-fmod.sh $FMODUSER $FMODPASS $PLATFORM
   - if [[ "$PLATFORM" == "x11" ]]; then tar -xvf fmodstudioapi20006linux.tar.gz; fi
-  - if [[ "$PLATFORM" == "osx" ]]; then hdiutil attach fmodstudioapi20006osx.dmg; fi
+  - if [[ "$PLATFORM" == "osx" ]]; then hdiutil attach fmodstudioapi20006mac-installer.dmg; fi
   - if [[ "$PLATFORM" == "windows" ]]; then
     7z x fmodstudioapi20006win-installer.exe;
     mv api/core/lib/x64/fmod_vc.lib api/core/lib/x64/fmod_vc.windows.tools.64.lib;
     mv api/studio/lib/x64/fmodstudio_vc.lib api/studio/lib/x64/fmodstudio_vc.windows.tools.64.lib;
     fi
-  - if [[ "$PLATFORM" == "iphone" ]]; then hdiutil attach fmodstudioapi20006ios.dmg; fi
+  - if [[ "$PLATFORM" == "iphone" ]]; then hdiutil attach fmodstudioapi20006ios-installer.dmg; fi
   - if [[ "$PLATFORM" == "android" ]]; then tar -xvf fmodstudioapi20006android.tar.gz; fi
   - if [[ "$PLATFORM" == "x11" ]]; then mv fmodstudioapi20006linux/api ./; fi
   - if [[ "$PLATFORM" == "osx" ]]; then cp -r "/Volumes/FMOD Programmers API Mac/FMOD Programmers API/api" ./; fi
