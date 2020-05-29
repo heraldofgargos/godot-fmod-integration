@@ -37,7 +37,7 @@ void Fmod::init(int numOfChannels, int studioFlags, int flags) {
 	// initialize FMOD Studio and FMOD Core System with provided flags
 	if (checkErrors(system->initialize(numOfChannels, studioFlags, flags, nullptr))) {
 		print_line("FMOD Sound System: Successfully initialized");
-		if (studioFlags == FMOD_STUDIO_INIT_LIVEUPDATE)
+		if (studioFlags & FMOD_STUDIO_INIT_LIVEUPDATE)
 			print_line("FMOD Sound System: Live update enabled!");
 	} else
 		print_error("FMOD Sound System: Failed to initialize :|");
