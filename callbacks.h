@@ -5,7 +5,7 @@
 /*       FMOD Studio module and bindings for the Godot game engine       */
 /*                                                                       */
 /*************************************************************************/
-/* Copyright (c) 2019 Alex Fonseka                                       */
+/* Copyright (c) 2020 Alex Fonseka                                       */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
