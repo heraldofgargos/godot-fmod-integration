@@ -214,3 +214,9 @@ print(perf_data.file)
 ## Contributing
 
 This project is still a work in progress and is probably not yet ready for use in full-blown production. If you run into issues (crashes, memory leaks, broken 3D sound etc.) let us know through the [issue tracker](https://github.com/alexfonseka/godot-fmod-integration/issues). If you are a programmer, sound designer or a composer and wish to contribute, the contribution guidelines are available [here](https://github.com/alexfonseka/godot-fmod-integration/blob/master/.github/contributing.md). Thank you for being interested in this project! ✌
+
+## An update from the creator
+
+Unfortunately, due to full-time work and personal reasons, the development of this project has slowed down significantly and I'm no longer able to actively maintain and contribute new features.
+
+However, this does not mean that the project is abandoned. All the work I've contributed so far is licensed under MIT, one of the most liberal open source licenses available. So feel free to use/modify/extend the code for your own projects - commercial or otherwise. Note that the MIT license only applies to the integration, not the FMOD SDK itself, which is proprietary and is not included in this repository.
