@@ -1,3 +1,14 @@
+I started developing this back in 2019 but no longer maintain it. If you found this recently and are looking to integrate FMOD into a new Godot project, consider using the [GDNative fork of this repo by utopia-rise](https://github.com/utopia-rise/fmod-gdnative).
+
+Some of the documentation present here may still prove useful, so do have a read if you're interested.
+
+All the integration code in this repo is MIT-licensed but in order to publish your FMOD-powered game commercially, you must register your project with FMOD and obtain a license. You don't need a license to get started however and when you're ready to publish, getting one is free for small projects and indies. Always check for the latest licensing terms on FMOD's website in case they get updated.
+
+All the best with your Godot project - Alex.
+
+P.S. Shoutout to Mike from Game From Scratch for covering this repo on his YouTube channel ✌
+___
+
 # FMOD Studio integration for Godot
 
 A Godot C++ module that provides an integration and GDScript bindings for the FMOD Studio API.
