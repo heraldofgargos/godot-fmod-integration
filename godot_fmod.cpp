@@ -28,8 +28,9 @@
 /*************************************************************************/
 
 #include "godot_fmod.h"
+#include "core/os/mutex.h"
 
-Mutex *Callbacks::mut;
+Mutex mutex;
 
 Fmod *Fmod::singleton = nullptr;
 
@@ -773,13 +774,13 @@ void Fmod::releaseEvent(uint64_t instanceId) {
 }
 
 void Fmod::releaseOneEvent(FMOD::Studio::EventInstance *eventInstance) {
-	Callbacks::mut->lock();
+	mutex.lock();
 	EventInfo *eventInfo = getEventInfo(eventInstance);
 	eventInstance->setUserData(nullptr);
 	events.erase((uint64_t)eventInstance);
 	checkErrors(eventInstance->release());
 	delete &eventInfo;
-	Callbacks::mut->unlock();
+	mutex.unlock();
 }
 
 void Fmod::clearNullListeners() {
@@ -1423,10 +1424,10 @@ FMOD_RESULT F_CALLBACK Callbacks::eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE 
 	FMOD::Studio::EventInstance *instance = (FMOD::Studio::EventInstance *)event;
 	auto instanceId = (uint64_t)instance;
 	Fmod::EventInfo *eventInfo;
-	mut->lock();
+	mutex.lock();
 	// check if instance is still valid
 	if (!instance) {
-		mut->unlock();
+		mutex.unlock();
 		return FMOD_OK;
 	}
 	instance->getUserData((void **)&eventInfo);
@@ -1460,12 +1461,12 @@ FMOD_RESULT F_CALLBACK Callbacks::eventCallback(FMOD_STUDIO_EVENT_CALLBACK_TYPE 
 			callbackInfo.soundSignalEmitted = false;
 		}
 	}
-	mut->unlock();
+	mutex.unlock();
 	return FMOD_OK;
 }
 
 void Fmod::runCallbacks() {
-	Callbacks::mut->lock();
+	mutex.lock();
 	for (auto e = events.front(); e; e = e->next()) {
 		FMOD::Studio::EventInstance *eventInstance = e->get();
 		Callbacks::CallbackInfo cbInfo = getEventInfo(eventInstance)->callbackInfo;
@@ -1490,7 +1491,7 @@ void Fmod::runCallbacks() {
 			cbInfo.soundSignalEmitted = true;
 		}
 	}
-	Callbacks::mut->unlock();
+	mutex.unlock();
 }
 
 void Fmod::_bind_methods() {
@@ -1735,12 +1736,11 @@ Fmod::Fmod() {
 	singleton = this;
 	system = nullptr;
 	coreSystem = nullptr;
-	Callbacks::mut = Mutex::create();
 	checkErrors(FMOD::Studio::System::create(&system));
 	checkErrors(system->getCoreSystem(&coreSystem));
 }
 
 Fmod::~Fmod() {
-	Callbacks::mut->~Mutex();
+	mutex.unlock();
 	singleton = nullptr;
 }
